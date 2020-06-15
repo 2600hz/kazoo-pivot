@@ -1,0 +1,4 @@
+  - 'Pivot: Accept 3rd party dialplan commands to control calls':
+    - 'applications/pivot/doc/README.md'
+    - 'applications/pivot/doc/issues.md'
+    - 'applications/pivot/doc/requests.md'

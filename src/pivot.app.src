@@ -3,7 +3,7 @@
                              kazoo_data,kazoo_documents,kazoo_modb,
                              kazoo_schemas,kazoo_stdlib,kazoo_translator,
                              kazoo_web,kernel,lager,stdlib]},
-              {description,"Pivot - Accept 3rd party dialplan commands to control calls"},
+              {description,"Pivot: Accept 3rd party dialplan commands to control calls"},
               {env,[{is_kazoo_app,true}]},
               {mod,{pivot_app,[]}},
               {modules,[]},
