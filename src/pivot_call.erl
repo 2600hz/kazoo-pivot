@@ -1,5 +1,5 @@
 %%%-----------------------------------------------------------------------------
-%%% @copyright (C) 2012-2020, 2600Hz
+%%% @copyright (C) 2012-2021, 2600Hz
 %%% @doc Handle processing of the pivot call
 %%% @author James Aimonetti
 %%%
@@ -428,8 +428,10 @@ handle_event(_JObj, #state{response_pid=Pid
 %% @end
 %%------------------------------------------------------------------------------
 -spec terminate(any(), state()) -> 'ok'.
-terminate(_Reason, #state{response_pid=Pid}) ->
+terminate(_Reason, #state{response_pid=Pid}) when is_pid(Pid) ->
     exit(Pid, 'kill'),
+    lager:info("pivot call terminating: ~p", [_Reason]);
+terminate(_Reason, #state{}) ->
     lager:info("pivot call terminating: ~p", [_Reason]).
 
 %%------------------------------------------------------------------------------
