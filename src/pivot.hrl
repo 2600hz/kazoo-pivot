@@ -5,8 +5,6 @@
 -include_lib("kazoo_stdlib/include/kz_log.hrl").
 -include_lib("kazoo_stdlib/include/kz_databases.hrl").
 
--define(CACHE_NAME, 'pivot_cache').
-
 -define(APP_NAME, <<"pivot">>).
 -define(APP_VERSION, <<"4.0.0">>).
 

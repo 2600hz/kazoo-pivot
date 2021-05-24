@@ -49,7 +49,6 @@
                ,call :: kapps_call:call() | 'undefined'
                ,request_id :: kz_http:req_id() | 'undefined'
                ,request_params :: kz_term:api_object()
-               ,response_code :: kz_term:api_ne_binary()
                ,response_headers :: kz_term:binaries() | kz_term:api_ne_binary()
                ,response_body = [] :: iodata()
                ,response_content_type :: kz_term:api_binary()
