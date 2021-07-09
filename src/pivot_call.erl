@@ -244,7 +244,7 @@ handle_cast({'cdr', _JObj}
                   }=State
            ) ->
     lager:debug("recv cdr for call, no cdr uri though"),
-    erlang:send_after(3000, self(), {'stop', Call}),
+    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'stop', Call}),
     {'noreply', State};
 handle_cast({'cdr', JObj}
            ,#state{cdr_uri=Url
@@ -266,7 +266,7 @@ handle_cast({'cdr', JObj}
             lager:debug("failed to send CDR: ~p", [_E])
     end,
 
-    erlang:send_after(3000, self(), {'stop', Call}),
+    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'stop', Call}),
     {'noreply', State};
 
 handle_cast({'add_event_handler', {Pid, _Ref}}
