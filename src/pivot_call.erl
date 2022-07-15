@@ -45,6 +45,7 @@
                ,request_format = <<"kazoo">> :: kz_term:ne_binary()
                ,request_body_format = <<"form">> :: kz_term:ne_binary()
                ,request_timeout_ms :: pos_integer()
+               ,custom_request_headers :: kz_term:api_object()
                ,method = 'get' :: http_method()
                ,call :: kapps_call:call() | 'undefined'
                ,request_id :: kz_http:req_id() | 'undefined'
@@ -73,9 +74,7 @@
 start_link(Call, JObj) ->
     CallId = kapps_call:call_id(Call),
 
-    Bindings = {'bindings', [{'call', [{'callid', CallId}]}
-                            ,{'self', []}
-                            ]},
+    Bindings = {'bindings', [{'call', [{'callid', CallId}, 'pooled']}]},
     Responders = {'responders', [{{?MODULE, 'maybe_relay_event'}
                                  ,[{<<"conference">>, <<"event">>}
                                   ,{<<"resource">>, <<"offnet_resp">>}
@@ -169,9 +168,17 @@ init(Call, JObj, 'false') ->
            ,request_timeout_ms=kz_json:get_integer_value(<<"Request-Timeout">>, JObj, ?DEFAULT_REQ_TIMEOUT_MS)
            ,debug=kz_json:is_true(<<"Debug">>, JObj, 'false')
            ,requester_queue = kapps_call:controller_queue(Call)
+           ,custom_request_headers = format_request_headers(kz_json:get_json_value(<<"Custom-Request-Headers">>, JObj))
            }
     ,'hibernate'
     }.
+
+format_request_headers('undefined') -> [];
+format_request_headers(RequestHeaders) ->
+    kz_json:foldl(fun format_request_header/3, [], RequestHeaders).
+
+format_request_header(Key, Value, Acc) ->
+    [{kz_term:to_list(Key), Value} | Acc].
 
 %%------------------------------------------------------------------------------
 %% @doc Handling call messages.
@@ -197,14 +204,12 @@ handle_cast({'request', Uri, Method}
     handle_cast({'request', Uri, Method, req_params(ReqFormat, Call)}, State);
 handle_cast({'request', Uri, Method, Params}
            ,#state{call=Call
-                  ,debug=Debug
                   ,requester_queue=RequesterQ
-                  ,request_body_format=ReqBodyFormat
-                  ,request_timeout_ms=TimeoutMs
-                  }=State) ->
+                  }=State
+           ) ->
     Call1 = kzt_util:set_voice_uri(Uri, Call),
 
-    case send_req(Call1, Uri, Method, Params, ReqBodyFormat, TimeoutMs, Debug) of
+    case send_req(Call1, Uri, Method, Params, State) of
         {'ok', ReqId, Call2} ->
             lager:debug("sent request ~p to '~s' via '~s'", [ReqId, Uri, Method]),
             {'noreply'
@@ -449,19 +454,29 @@ code_change(_OldVsn, State, _Extra) ->
 %% @doc
 %% @end
 %%------------------------------------------------------------------------------
--spec send_req(kapps_call:call(), kz_term:ne_binary(), http_method(), kz_term:proplist(), kz_term:ne_binary(), pos_integer(), boolean()) ->
+-spec send_req(kapps_call:call(), kz_term:ne_binary(), http_method(), kz_term:proplist(), state()) ->
           {'ok', kz_http:req_id(), kapps_call:call()} |
           {'stop', kapps_call:call()}.
-send_req(Call, Uri, 'get', BaseParams, _ReqBodyFormat, TimeoutMs, Debug) ->
+send_req(Call, Uri, 'get', BaseParams, #state{request_body_format=_ReqBodyFormat
+                                             ,request_timeout_ms=TimeoutMs
+                                             ,debug=Debug
+                                             ,custom_request_headers=CustomReqHeaders
+                                             }
+        ) ->
     UserParams = kzt_translator:get_user_vars(Call),
     Params = kz_json:set_values(BaseParams, UserParams),
     UpdatedCall = kapps_call:kvs_erase(<<"digits_collected">>, Call),
-    send(UpdatedCall, uri(Uri, format_request(Params, <<"form">>)), 'get', [], [], TimeoutMs, Debug);
-send_req(Call, Uri, 'post', BaseParams, ReqBodyFormat, TimeoutMs, Debug) ->
+    send(UpdatedCall, uri(Uri, format_request(Params, <<"form">>)), 'get', CustomReqHeaders, [], TimeoutMs, Debug);
+send_req(Call, Uri, 'post', BaseParams, #state{request_body_format=ReqBodyFormat
+                                              ,request_timeout_ms=TimeoutMs
+                                              ,debug=Debug
+                                              ,custom_request_headers=CustomReqHeaders
+                                              }
+        ) ->
     UserParams = kzt_translator:get_user_vars(Call),
     Params = kz_json:set_values(BaseParams, UserParams),
     UpdatedCall = kapps_call:kvs_erase(<<"digits_collected">>, Call),
-    Headers = [{"Content-Type", req_content_type(ReqBodyFormat)}],
+    Headers = [{"Content-Type", req_content_type(ReqBodyFormat)} | CustomReqHeaders],
     send(UpdatedCall, Uri, 'post', Headers, format_request(Params, ReqBodyFormat), TimeoutMs, Debug).
 
 -spec send(kapps_call:call(), kz_term:ne_binary(), http_method(), kz_term:proplist(), iolist(), pos_integer(), boolean()) ->
