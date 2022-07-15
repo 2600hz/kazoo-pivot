@@ -45,7 +45,7 @@
                ,request_format = <<"kazoo">> :: kz_term:ne_binary()
                ,request_body_format = <<"form">> :: kz_term:ne_binary()
                ,request_timeout_ms :: pos_integer()
-               ,custom_request_headers :: kz_term:api_object()
+               ,custom_request_headers = [] :: kz_json:json_proplist()
                ,method = 'get' :: http_method()
                ,call :: kapps_call:call() | 'undefined'
                ,request_id :: kz_http:req_id() | 'undefined'
@@ -173,6 +173,7 @@ init(Call, JObj, 'false') ->
     ,'hibernate'
     }.
 
+-spec format_request_headers(kz_term:api_object()) -> kz_json:json_proplist().
 format_request_headers('undefined') -> [];
 format_request_headers(RequestHeaders) ->
     kz_json:foldl(fun format_request_header/3, [], RequestHeaders).
