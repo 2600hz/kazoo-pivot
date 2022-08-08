@@ -294,6 +294,8 @@ handle_cast({'gen_listener',{'is_consuming',_IsConsuming}}, #state{call=Call}=St
         'false' ->
             {'noreply', State}
     end;
+handle_cast({'gen_listener', {'pooled_binding', _B}}, State) ->
+    {'noreply', State};
 handle_cast(_Req, State) ->
     lager:debug("unhandled cast: ~p", [_Req]),
     {'noreply', State}.
@@ -322,7 +324,7 @@ handle_info({'http', {ReqId, {'error', Error}}}
            ) ->
     lager:info("recv error ~p : collected: ~s", [Error, lists:reverse(_RespBody)]),
     publish_failed(Call, RequesterQ),
-    {'stop', 'error', State};
+    {'stop', 'normal', State};
 
 handle_info({'http', {ReqId, 'stream', Chunk}}
            ,#state{request_id=ReqId
