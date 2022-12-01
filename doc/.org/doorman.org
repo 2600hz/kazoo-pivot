@@ -18,6 +18,35 @@ In the following API commands and PHP scripts, there are placeholder values to b
 | =$DEVICE_ID=        | The callee's device to ring for doorman                               |
 | =$VOICEMAIL_BOX_ID= | The callee's voicemail box to use for option 3                        |
 
+** Ladder diagram
+
+The basic flow, in visual form:
+
+#+begin_src plantuml :file doorman.png
+title Doorman Flow
+
+Caller->KAZOO: inbound call to {DID}
+KAZOO->Caller: "record your name and short message"
+Caller->KAZOO: "Alice Bob, calling for Bob Alice"
+KAZOO->Caller: play ringing
+KAZOO->PivotServer: POST recording MP3 (includes caller's call_id)
+PivotServer->KAZOO: originate quickcall to Bob Alice and the doorman callflow
+KAZOO->BobAlicePhone: call Bob Alice
+BobAlicePhone->KAZOO: answers call
+KAZOO->BobAlicePhone: executing the doorman callflow
+KAZOO->BobAlicePhone: play doorman menu
+BobAlicePhone->KAZOO: menu selection
+KAZOO->PivotServer: POST request with menu selection
+PivotServer->KAZOO: if 1, return callflow with "call_pickup" with caller's call_id
+PivotServer->KAZOO: if 2, return callflow with record_call then "call_pickup" with caller's call_id
+PivotServer->KAZOO: if 3, return callflow with BobAlice's voicemail box
+PivotServer->KAZOO: if 4, return callflow to hangup BobAlice
+PivotServer->KAZOO: if 4, issue metaflow to hangup caller
+#+end_src
+
+#+RESULTS:
+[[file:doorman.png]]
+
 ** Setup an account
 
 There are two primary callflows to create, the handler for incoming calls to users, and the doorman callflow for the recipient.
