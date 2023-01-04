@@ -1,5 +1,5 @@
 %%%-----------------------------------------------------------------------------
-%%% @copyright (C) 2012-2022, 2600Hz
+%%% @copyright (C) 2012-2023, 2600Hz
 %%% @doc Handle processing of the pivot call
 %%% @author James Aimonetti
 %%%
