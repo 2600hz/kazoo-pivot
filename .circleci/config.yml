@@ -15,10 +15,10 @@ workflows:
           context: Private-Builds
           requires:
             - kazoo/build-preparation
-      # - kazoo/eunit-tests:
-      #     context: Private-Builds
-      #     requires:
-      #       - kazoo/build-preparation
+      - kazoo/eunit-tests:
+          context: Private-Builds
+          requires:
+            - kazoo/build-preparation
       - kazoo/code-checks:
           requires:
             - kazoo/build
@@ -28,27 +28,27 @@ workflows:
       - kazoo/analyze:
           requires:
             - kazoo/build
-      # - kazoo/integration-test:
-      #     requires:
-      #       - kazoo/build
+      - kazoo/integration-test:
+          requires:
+            - kazoo/build
       - kazoo/build-centos7:
           context: Private-Builds
           target-type: kapp
           requires:
-#            - kazoo/eunit-tests
+            - kazoo/eunit-tests
             - kazoo/code-checks
             - kazoo/docs
             - kazoo/analyze
-#            - kazoo/integration-test
+            - kazoo/integration-test
       - kazoo/build-rockylinux8:
           context: Private-Builds
           target-type: kapp
           requires:
-#            - kazoo/eunit-tests
+            - kazoo/eunit-tests
             - kazoo/code-checks
             - kazoo/docs
             - kazoo/analyze
-#            - kazoo/integration-test
+            - kazoo/integration-test
 
   build_release:
     jobs:
@@ -70,15 +70,15 @@ workflows:
               ignore: /.*/
           requires:
             - kazoo/build-preparation
-      # - kazoo/eunit-tests:
-      #     context: Private-Builds
-      #     filters:
-      #       tags:
-      #         only: /^\d+\.\d+\.\d+$/
-      #       branches:
-      #         ignore: /.*/
-      #     requires:
-      #       - kazoo/build-preparation
+      - kazoo/eunit-tests:
+          context: Private-Builds
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
+          requires:
+            - kazoo/build-preparation
       - kazoo/code-checks:
           filters:
             tags:
@@ -103,14 +103,14 @@ workflows:
               ignore: /.*/
           requires:
             - kazoo/build
-      # - kazoo/integration-test:
-      #     filters:
-      #       tags:
-      #         only: /^\d+\.\d+\.\d+$/
-      #       branches:
-      #         ignore: /.*/
-      #     requires:
-      #       - kazoo/build
+      - kazoo/integration-test:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
+          requires:
+            - kazoo/build
       - kazoo/build-centos7:
           context: Private-Builds
           target-type: kapp
@@ -120,11 +120,11 @@ workflows:
             branches:
               ignore: /.*/
           requires:
-#            - kazoo/eunit-tests
+            - kazoo/eunit-tests
             - kazoo/code-checks
             - kazoo/docs
             - kazoo/analyze
-#            - kazoo/integration-test
+            - kazoo/integration-test
       - kazoo/build-rockylinux8:
           context: Private-Builds
           target-type: kapp
@@ -134,8 +134,8 @@ workflows:
             branches:
               ignore: /.*/
           requires:
-#            - kazoo/eunit-tests
+            - kazoo/eunit-tests
             - kazoo/code-checks
             - kazoo/docs
             - kazoo/analyze
-#            - kazoo/integration-test
+            - kazoo/integration-test
