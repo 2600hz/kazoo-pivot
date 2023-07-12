@@ -49,6 +49,15 @@ workflows:
             - kazoo/docs
             - kazoo/analyze
             - kazoo/integration-test
+      - kazoo/build-rockylinux9:
+          context: Private-Builds
+          target-type: kapp
+          requires:
+            - kazoo/eunit-tests
+            - kazoo/code-checks
+            - kazoo/docs
+            - kazoo/analyze
+            - kazoo/integration-test
 
   build_release:
     jobs:
@@ -126,6 +135,20 @@ workflows:
             - kazoo/analyze
             - kazoo/integration-test
       - kazoo/build-rockylinux8:
+          context: Private-Builds
+          target-type: kapp
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
+          requires:
+            - kazoo/eunit-tests
+            - kazoo/code-checks
+            - kazoo/docs
+            - kazoo/analyze
+            - kazoo/integration-test
+      - kazoo/build-rockylinux9:
           context: Private-Builds
           target-type: kapp
           filters:
