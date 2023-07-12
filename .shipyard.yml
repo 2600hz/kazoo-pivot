@@ -23,7 +23,19 @@ package:
     vendor: 2600Hz
   rockylinux8:
     name: kazoo-application-pivot
-    dist: .el8.rockylinux
+    dist: .el8
+    summary: Kazoo core application
+    description: |
+      Provides capabilities for developers to control what callflow is run
+      dynamically, on a per-call basis.
+    app_name: pivot
+    license: MPL 2.0
+    group: Productivity/Telephony
+    url: https://2600hz.org/
+    vendor: 2600Hz
+  rockylinux9:
+    name: kazoo-application-pivot
+    dist: .el9
     summary: Kazoo core application
     description: |
       Provides capabilities for developers to control what callflow is run
