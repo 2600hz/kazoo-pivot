@@ -8,13 +8,13 @@ workflows:
   version: 2
   build_branch:
     jobs:
-  #     - kazoo/build-preparation:
-  #         context: Private-Builds
-  #         target-type: kapp
-  #     - kazoo/build:
-  #         context: Private-Builds
-  #         requires:
-  #           - kazoo/build-preparation
+      - kazoo/build-preparation:
+          context: Private-Builds
+          target-type: kapp
+      - kazoo/build:
+          context: Private-Builds
+          requires:
+            - kazoo/build-preparation
   #     - kazoo/eunit-tests:
   #         context: Private-Builds
   #         requires:
@@ -52,7 +52,8 @@ workflows:
       - kazoo/build-rockylinux9:
           context: Private-Builds
           target-type: kapp
-          # requires:
+          requires:
+            - kazoo/build
           #   - kazoo/eunit-tests
           #   - kazoo/code-checks
           #   - kazoo/docs
