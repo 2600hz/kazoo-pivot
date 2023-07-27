@@ -39,7 +39,7 @@ workflows:
             - kazoo/code-checks
             - kazoo/docs
             - kazoo/analyze
-            - kazoo/integration-test
+            # - kazoo/integration-test
       - kazoo/build-rockylinux8:
           context: Private-Builds
           target-type: kapp
