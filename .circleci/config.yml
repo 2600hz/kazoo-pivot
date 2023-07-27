@@ -40,42 +40,6 @@ workflows:
             - kazoo/docs
             - kazoo/analyze
             - kazoo/integration-test
-      - compile-rockylinux8:
-          context: Private-Builds
-          executor:
-            name: packager-rocky8
-          requires:
-            - kazoo/build
-          steps:
-            - skip-unwanted:
-                target-type: kapp
-                skip-skel: true
-                for-packager: true
-            - checkout
-            - init-workspace:
-                target-type: kapp
-                for-packager: true
-            - make-deps:
-                with-cache: true
-            - write-workspace
-      - compile-rockylinux9:
-          context: Private-Builds
-          executor:
-            name: packager-rocky8
-          requires:
-            - kazoo/build
-          steps:
-            - skip-unwanted:
-                target-type: kapp
-                skip-skel: true
-                for-packager: true
-            - checkout
-            - init-workspace:
-                target-type: kapp
-                for-packager: true
-            - make-deps:
-                with-cache: true
-            - write-workspace
       - kazoo/build-rockylinux8:
           context: Private-Builds
           target-type: kapp
@@ -85,7 +49,6 @@ workflows:
             - kazoo/docs
             - kazoo/analyze
             # - kazoo/integration-test
-            - compile-rockylinux8
       - kazoo/build-rockylinux9:
           context: Private-Builds
           target-type: kapp
@@ -95,7 +58,6 @@ workflows:
             - kazoo/docs
             - kazoo/analyze
             # - kazoo/integration-test
-            - compile-rockylinux9
 
   # build_release:
   #   jobs:
