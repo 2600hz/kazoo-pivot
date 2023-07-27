@@ -4,14 +4,6 @@ version: 2.1
 orbs:
   kazoo: official-2600hz/kazoo@dev:alpha
 
-jobs:
-    muahahaha:
-        docker:
-            - image: alpine
-        steps:
-            - run:
-                command: echo we must fail baby && exit 1
-
 workflows:
   version: 2
   build_branch:
@@ -33,34 +25,31 @@ workflows:
               platform: [centos-7, rockylinux-8, rockylinux-9]
           requires:
             - preparation-<< matrix.platform >>
-      # - kazoo/eunit-tests:
-      #     context: Private-Builds
-      #     requires:
-      #       - preparation-centos-7
+      - kazoo/eunit-tests:
+          context: Private-Builds
+          requires:
+            - preparation-centos-7
       - kazoo/code-checks:
           requires:
             - beams-centos-7
-      - muahahaha:
+      - kazoo/docs:
           requires:
-            - kazoo/code-checks
-      # - kazoo/docs:
-      #     requires:
-      #       - beams-centos-7
-      # - kazoo/analyze:
-      #     requires:
-      #       - beams-centos-7
-      # - kazoo/integration-test:
-      #     requires:
-      #       - beams-centos-7
+            - beams-centos-7
+      - kazoo/analyze:
+          requires:
+            - beams-centos-7
+      - kazoo/integration-test:
+          requires:
+            - beams-centos-7
       - kazoo/build-centos7:
           context: Private-Builds
           target-type: kapp
           requires:
-            # - kazoo/eunit-tests
+            - kazoo/eunit-tests
             - kazoo/code-checks
-            # - kazoo/docs
-            # - kazoo/analyze
-            # - kazoo/integration-test
+            - kazoo/docs
+            - kazoo/analyze
+            - kazoo/integration-test
       - kazoo/build-rockylinux8:
           context: Private-Builds
           target-type: kapp
