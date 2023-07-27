@@ -9,15 +9,17 @@ workflows:
   build_branch:
     jobs:
       - kazoo/build-preparation:
-          name: preparation-<< matrix.platform >>
           context: Private-Builds
+          name: preparation-<< matrix.platform >>
           target-type: kapp
+          platform: << matrix.platform >>
           matrix:
             parameters:
               platform: [centos-7, rockylinux-8, rockylinux-9]
       - kazoo/build:
-          name: beams-<< matrix.platform >>
           context: Private-Builds
+          name: beams-<< matrix.platform >>
+          platform: << matrix.platform >>
           matrix:
             parameters:
               platform: [centos-7, rockylinux-8, rockylinux-9]
