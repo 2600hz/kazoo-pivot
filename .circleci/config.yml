@@ -12,7 +12,11 @@ workflows:
           context: Private-Builds
           target-type: kapp
       - kazoo/build:
+          name: beams-<< matrix.platform >>
           context: Private-Builds
+          matrix:
+            parameters:
+              platform: ["centos7", "rocky8", "rocky9"]
           requires:
             - kazoo/build-preparation
       - kazoo/eunit-tests:
@@ -21,43 +25,40 @@ workflows:
             - kazoo/build-preparation
       - kazoo/code-checks:
           requires:
-            - kazoo/build
+            - beams-centos7
       - kazoo/docs:
           requires:
-            - kazoo/build
+            - beams-centos7
       - kazoo/analyze:
           requires:
-            - kazoo/build
+            - beams-centos7
       - kazoo/integration-test:
           requires:
-            - kazoo/build
+            - beams-centos7
+      - kazoo/wait-on-tests:
+          requires:
+            - kazoo/eunit-tests
+            - kazoo/code-checks
+            - kazoo/docs
+            - kazoo/analyze
+            # - kazoo/integration-test
       - kazoo/build-centos7:
           context: Private-Builds
           target-type: kapp
           requires:
-            - kazoo/eunit-tests
-            - kazoo/code-checks
-            - kazoo/docs
-            - kazoo/analyze
-            # - kazoo/integration-test
+            - kazoo/wait-on-tests
       - kazoo/build-rockylinux8:
           context: Private-Builds
           target-type: kapp
           requires:
-            - kazoo/eunit-tests
-            - kazoo/code-checks
-            - kazoo/docs
-            - kazoo/analyze
-            # - kazoo/integration-test
+            - beams-rocky8
+            - kazoo/wait-on-tests
       - kazoo/build-rockylinux9:
           context: Private-Builds
           target-type: kapp
           requires:
-            - kazoo/eunit-tests
-            - kazoo/code-checks
-            - kazoo/docs
-            - kazoo/analyze
-            # - kazoo/integration-test
+            - beams-rocky9
+            # - kazoo/wait-on-tests
 
   # build_release:
   #   jobs:
