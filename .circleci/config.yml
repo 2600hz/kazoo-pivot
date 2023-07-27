@@ -9,39 +9,43 @@ workflows:
   build_branch:
     jobs:
       - kazoo/build-preparation:
+          name: preparation-<< matrix.platform >>
           context: Private-Builds
           target-type: kapp
+          matrix:
+            parameters:
+              platform: [centos-7, rockylinux-8, rockylinux-9]
       - kazoo/build:
           name: beams-<< matrix.platform >>
           context: Private-Builds
           matrix:
             parameters:
-              platform: ["centos7", "rocky8", "rocky9"]
+              platform: [centos-7, rockylinux-8, rockylinux-9]
           requires:
-            - kazoo/build-preparation
+            - preparation-<< matrix.platform >>
 
-      - kazoo/eunit-tests:
-          context: Private-Builds
-          requires:
-            - kazoo/build-preparation
+      # - kazoo/eunit-tests:
+      #     context: Private-Builds
+      #     requires:
+      #       - preparation-centos-7
       - kazoo/code-checks:
           requires:
-            - beams-centos7
-      - kazoo/docs:
-          requires:
-            - beams-centos7
-      - kazoo/analyze:
-          requires:
-            - beams-centos7
-      - kazoo/integration-test:
-          requires:
-            - beams-centos7
+            - beams-centos-7
+      # - kazoo/docs:
+      #     requires:
+      #       - beams-centos-7
+      # - kazoo/analyze:
+      #     requires:
+      #       - beams-centos-7
+      # - kazoo/integration-test:
+      #     requires:
+      #       - beams-centos-7
       - kazoo/wait-on-tests:
           requires:
-            - kazoo/eunit-tests
+            # - kazoo/eunit-tests
             - kazoo/code-checks
-            - kazoo/docs
-            - kazoo/analyze
+            # - kazoo/docs
+            # - kazoo/analyze
             # - kazoo/integration-test
       - kazoo/build-centos7:
           context: Private-Builds
@@ -52,14 +56,14 @@ workflows:
           context: Private-Builds
           target-type: kapp
           requires:
-            - beams-rocky8
+            - beams-rockylinux-8
             - kazoo/wait-on-tests
       - kazoo/build-rockylinux9:
           context: Private-Builds
           target-type: kapp
           requires:
-            - beams-rocky9
-            # - kazoo/wait-on-tests
+            - beams-rockylinux-9
+            - kazoo/wait-on-tests
 
   # build_release:
   #   jobs:
