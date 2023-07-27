@@ -33,6 +33,7 @@ workflows:
       - kazoo/code-checks:
           requires:
             - beams-centos-7
+
       # - kazoo/docs:
       #     requires:
       #       - beams-centos-7
