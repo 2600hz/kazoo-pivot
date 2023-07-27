@@ -19,6 +19,7 @@ workflows:
               platform: ["centos7", "rocky8", "rocky9"]
           requires:
             - kazoo/build-preparation
+
       - kazoo/eunit-tests:
           context: Private-Builds
           requires:
