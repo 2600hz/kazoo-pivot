@@ -40,4 +40,5 @@ declare_exchanges() ->
     _ = kapi_call:declare_exchanges(),
     _ = kapi_dialplan:declare_exchanges(),
     _ = kapi_notifications:declare_exchanges(),
+    _ = kapi_offnet_resource:declare_exchanges(),
     kapi_self:declare_exchanges().

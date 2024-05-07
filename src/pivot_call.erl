@@ -74,7 +74,9 @@
 start_link(Call, JObj) ->
     CallId = kapps_call:call_id(Call),
 
-    Bindings = {'bindings', [{'call', [{'callid', CallId}, 'pooled']}]},
+    Bindings = {'bindings', [{'self', []}
+                            ,{'call', [{'callid', CallId}, 'pooled']}
+                            ]},
     Responders = {'responders', [{{?MODULE, 'maybe_relay_event'}
                                  ,[{<<"conference">>, <<"event">>}
                                   ,{<<"resource">>, <<"offnet_resp">>}
@@ -122,10 +124,11 @@ maybe_relay_event(JObj, Props) ->
 handle_call_event(JObj, Props) ->
     case kz_api:event_type(JObj) of
         {<<"call_event">>, <<"CHANNEL_DESTROY">>} ->
+            lager:debug("channel destroyed, saving cdrs and hanging up..."),
             Pid = props:get_value('server', Props),
             gen_listener:cast(Pid, {'cdr', JObj});
-        {_, _Evt} ->
-            lager:info("ignoring event ~s", [_Evt])
+        {_Cat, _Evt} ->
+            'ok'
     end.
 
 %%%=============================================================================
@@ -154,14 +157,12 @@ init(Call, JObj, 'false') ->
 
     ReqFormat = kz_json:get_value(<<"Request-Format">>, JObj, <<"twiml">>),
     ReqBodyFormat = kz_json:get_value(<<"Request-Body-Format">>, JObj, <<"form">>),
-    BaseParams = req_params(ReqFormat, Call),
 
-    lager:debug("starting pivot req to ~s to ~s", [Method, VoiceUri]),
-
-    new_request(self(), VoiceUri, Method, BaseParams),
+    lager:debug("waiting on queue for pivot ~s request to ~s", [Method, VoiceUri]),
 
     {'ok'
-    ,#state{cdr_uri=kz_json:get_value(<<"CDR-URI">>, JObj)
+    ,#state{voice_uri = VoiceUri
+           ,cdr_uri=kz_json:get_value(<<"CDR-URI">>, JObj)
            ,call=kzt_util:increment_iteration(Call)
            ,request_format=ReqFormat
            ,request_body_format=ReqBodyFormat
@@ -232,10 +233,17 @@ handle_cast({'updated_call', Call}, State) ->
     {'noreply', State#state{call=Call}};
 
 handle_cast({'gen_listener', {'created_queue', Q}}
-           ,#state{call=Call}=State
+           ,#state{call=Call
+                  ,voice_uri = VoiceUri
+                  ,request_format = ReqFormat
+                  ,method = Method
+                  }=State
            ) ->
-    %% TODO: Block on waiting for controller queue
-    {'noreply', State#state{call=kapps_call:set_controller_queue(Q, Call)}};
+    lager:debug("acquired queue ~s", [Q]),
+
+    BaseParams = req_params(ReqFormat, Call),
+    new_request(self(), VoiceUri, Method, BaseParams),
+    {'noreply', State#state{call=kapps_call:kvs_store(<<"pivot_queue">>, Q, Call)}};
 
 handle_cast({'stop', Call}
            ,#state{cdr_uri='undefined'}=State
