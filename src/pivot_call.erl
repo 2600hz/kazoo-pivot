@@ -162,6 +162,7 @@ init(Call, JObj, 'false') ->
 
     {'ok'
     ,#state{voice_uri = VoiceUri
+           ,method = Method
            ,cdr_uri=kz_json:get_value(<<"CDR-URI">>, JObj)
            ,call=kzt_util:increment_iteration(Call)
            ,request_format=ReqFormat
