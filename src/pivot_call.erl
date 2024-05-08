@@ -338,7 +338,7 @@ handle_info({'http', {ReqId, {'error', Error}}}
            ) ->
     lager:info("recv error ~p : collected: ~s", [Error, lists:reverse(_RespBody)]),
     publish_failed(Call, RequesterQ),
-    {'stop', 'normal', State};
+    {'stop', 'http_error', State};
 
 handle_info({'http', {ReqId, 'stream', Chunk}}
            ,#state{request_id=ReqId
@@ -392,7 +392,7 @@ handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
     lager:info("recv client failure status code ~p", [StatusCode]),
     publish_failed(Call, RequesterQ),
     maybe_debug_resp(ShouldDebug, Call, kz_term:to_binary(StatusCode), RespHeaders, RespBody),
-    {'stop', 'normal', State};
+    {'stop', 'http_error', State};
 handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
            ,#state{request_id=ReqId
                   ,requester_queue=RequesterQ
@@ -404,7 +404,7 @@ handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
     lager:info("recv server failure status code ~p", [StatusCode]),
     publish_failed(Call, RequesterQ),
     maybe_debug_resp(ShouldDebug, Call, kz_term:to_binary(StatusCode), RespHeaders, RespBody),
-    {'stop', 'normal', State};
+    {'stop', 'http_error', State};
 
 handle_info({'DOWN', Ref, 'process', Pid, 'normal'}
            ,#state{response_pid=Pid
@@ -451,6 +451,10 @@ handle_event(_JObj, #state{response_pid=Pid
 -spec terminate(any(), state()) -> 'ok'.
 terminate(_Reason, #state{response_pid=Pid}) when is_pid(Pid) ->
     exit(Pid, 'kill'),
+    lager:info("pivot call terminating: ~p", [_Reason]);
+terminate(_Reason, #state{call=Call}) when _Reason == 'http_error' ->
+    lager:debug("getting url not success, terminating call"),
+    kapps_call_command:hangup(Call),
     lager:info("pivot call terminating: ~p", [_Reason]);
 terminate(_Reason, #state{}) ->
     lager:info("pivot call terminating: ~p", [_Reason]).
