@@ -19,6 +19,7 @@
         ,new_request/3, new_request/4
         ,updated_call/2
         ,usurp_executor/1
+        ,get_state_and_terminate/2
         ]).
 
 %% gen_server callbacks
@@ -192,9 +193,13 @@ format_request_header(Key, Value, Acc) ->
 %% @doc Handling call messages.
 %% @end
 %%------------------------------------------------------------------------------
--spec handle_call(any(), kz_term:pid_ref(), state()) -> {'reply', 'ok', state()}.
+-spec handle_call(any(), kz_term:pid_ref(), state()) ->
+          {'reply', 'ok', state()} | {'reply', state(), state()}.
 handle_call({'updated_call', Call}, _From, State) ->
     {'reply', 'ok', State#state{call=Call}};
+
+handle_call(get_state, _From, State) ->
+    {'reply', State, State};
 
 handle_call(_Request, _From, State) ->
     {'reply', 'ok', State}.
@@ -536,8 +541,10 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
 
     case process_resp(RequesterQ, Call, CT, RespBody) of
         {'stop_with_response', Call1} -> stop_with_response(Srv, Call1);
-        {'stop', Call1} -> stop_call(Srv, Call1);
-        {'ok', Call1} -> stop_call(Srv, Call1);
+        {'stop', Call1} ->
+            get_state_and_terminate(Srv, Call1);
+        {'ok', Call1} ->
+            get_state_and_terminate(Srv, Call1);
         {'usurp', _Call1} -> usurp_executor(Srv);
         {'request', Call1} ->
             _ = updated_call(Srv, kzt_util:increment_iteration(Call1)),
@@ -713,3 +720,22 @@ req_content_type(<<"form">>) ->
     "application/x-www-form-urlencoded";
 req_content_type(<<"json">>) ->
     "application/json".
+
+%% send stop_call to pivot_call with a delay,
+%% to avoid race condition between stop_call and DOWN message
+%% of handle_resp process when it's done the task
+-spec get_state_and_terminate(kz_term:pid(), kapps_call:call()) -> ok.
+get_state_and_terminate(Srv, Call) ->
+    Fun = fun() ->
+                  timer:sleep(?MILLISECONDS_IN_SECOND/10),
+                  CurrentState = gen_listener:call(Srv, get_state),
+                  case {CurrentState#state.response_pid, CurrentState#state.response_ref} of
+                      {'undefined', 'undefined'} ->
+                          lager:info("translator process completed, died, state is up to date"),
+                          stop_call(Srv, Call);
+                      _ ->
+                          ok
+                  end
+          end,
+    kz_process:spawn(Fun),
+    ok.
