@@ -107,7 +107,7 @@ new_request(Srv, Uri, Method, Params) ->
     gen_listener:cast(Srv, {'request', Uri, Method, Params}).
 
 -spec updated_call(pid(), kapps_call:call()) -> 'ok'.
-updated_call(Srv, Call) -> gen_listener:cast(Srv, {'updated_call', Call}).
+updated_call(Srv, Call) -> gen_listener:call(Srv, {'updated_call', Call}).
 
 -spec usurp_executor(pid()) -> 'ok'.
 usurp_executor(Srv) -> gen_listener:cast(Srv, 'usurp').
@@ -193,6 +193,9 @@ format_request_header(Key, Value, Acc) ->
 %% @end
 %%------------------------------------------------------------------------------
 -spec handle_call(any(), kz_term:pid_ref(), state()) -> {'reply', 'ok', state()}.
+handle_call({'updated_call', Call}, _From, State) ->
+    {'reply', 'ok', State#state{call=Call}};
+
 handle_call(_Request, _From, State) ->
     {'reply', 'ok', State}.
 
@@ -234,9 +237,6 @@ handle_cast({'request', Uri, Method, Params}
             publish_failed(Call, RequesterQ),
             {'stop', 'normal', State}
     end;
-
-handle_cast({'updated_call', Call}, State) ->
-    {'noreply', State#state{call=Call}};
 
 handle_cast({'gen_listener', {'created_queue', Q}}
            ,#state{call=Call
@@ -412,7 +412,7 @@ handle_info({'DOWN', Ref, 'process', Pid, 'normal'}
                   }=State
            ) ->
     lager:debug("response processing finished for ~p(~p)", [Pid, Ref]),
-    {'noreply', State#state{response_pid='undefined'}, 'hibernate'};
+    {'noreply', State#state{response_pid='undefined', response_ref = 'undefined'}, 'hibernate'};
 handle_info({'DOWN', Ref, 'process', Pid, Reason}
            ,#state{response_pid=Pid
                   ,response_ref=Ref
@@ -422,7 +422,7 @@ handle_info({'DOWN', Ref, 'process', Pid, Reason}
            ) ->
     lager:info("response pid ~p(~p) down: ~p", [Pid, Ref, Reason]),
     publish_failed(Call, RequesterQ),
-    {'stop', 'normal', State};
+    {'stop', 'normal', State#state{response_pid = 'undefined', response_ref = 'undefined'}};
 handle_info(_Info, State) ->
     lager:debug("unhandled message: ~p", [_Info]),
     {'noreply', State}.
@@ -450,7 +450,13 @@ handle_event(_JObj, #state{response_pid=Pid
 %%------------------------------------------------------------------------------
 -spec terminate(any(), state()) -> 'ok'.
 terminate(_Reason, #state{response_pid=Pid}) when is_pid(Pid) ->
-    exit(Pid, 'kill'),
+    _ =
+        case is_process_alive(Pid) of
+            'true' ->
+                exit(Pid, 'kill');
+            'false' ->
+                ok
+        end,
     lager:info("pivot call terminating: ~p", [_Reason]);
 terminate(_Reason, #state{call=Call}) when _Reason == 'http_error' ->
     lager:debug("getting url not success, terminating call"),
@@ -534,7 +540,7 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
         {'ok', Call1} -> stop_call(Srv, Call1);
         {'usurp', _Call1} -> usurp_executor(Srv);
         {'request', Call1} ->
-            updated_call(Srv, kzt_util:increment_iteration(Call1)),
+            _ = updated_call(Srv, kzt_util:increment_iteration(Call1)),
             new_request(Srv
                        ,kzt_util:get_voice_uri(Call1)
                        ,kzt_util:get_voice_uri_method(Call1)
