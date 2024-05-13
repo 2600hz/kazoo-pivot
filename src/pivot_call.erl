@@ -240,11 +240,9 @@ handle_cast({'gen_listener', {'created_queue', Q}}
                   ,method = Method
                   }=State
            ) ->
-    lager:debug("acquired queue ~s", [Q]),
-
     BaseParams = req_params(ReqFormat, Call),
     new_request(self(), VoiceUri, Method, BaseParams),
-    {'noreply', State#state{call=kapps_call:kvs_store(<<"pivot_queue">>, Q, Call)}};
+    {'noreply', State#state{call=kapps_call:set_control_queue(Q, Call)}};
 
 handle_cast({'stop', Call}
            ,#state{cdr_uri='undefined'}=State
