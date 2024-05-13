@@ -239,7 +239,7 @@ handle_cast({'request', Uri, Method, Params}
                         }
             };
         _ ->
-            publish_failed(Call, RequesterQ),
+            maybe_publish_failed(Call, RequesterQ),
             {'stop', 'normal', State}
     end;
 
@@ -342,7 +342,7 @@ handle_info({'http', {ReqId, {'error', Error}}}
                   }=State
            ) ->
     lager:info("recv error ~p : collected: ~s", [Error, lists:reverse(_RespBody)]),
-    publish_failed(Call, RequesterQ),
+    maybe_publish_failed(Call, RequesterQ),
     {'stop', 'http_error', State};
 
 handle_info({'http', {ReqId, 'stream', Chunk}}
@@ -395,7 +395,7 @@ handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
            )
   when (StatusCode - 400) < 100 ->
     lager:info("recv client failure status code ~p", [StatusCode]),
-    publish_failed(Call, RequesterQ),
+    maybe_publish_failed(Call, RequesterQ),
     maybe_debug_resp(ShouldDebug, Call, kz_term:to_binary(StatusCode), RespHeaders, RespBody),
     {'stop', 'http_error', State};
 handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
@@ -407,7 +407,7 @@ handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
            )
   when (StatusCode - 500) < 100 ->
     lager:info("recv server failure status code ~p", [StatusCode]),
-    publish_failed(Call, RequesterQ),
+    maybe_publish_failed(Call, RequesterQ),
     maybe_debug_resp(ShouldDebug, Call, kz_term:to_binary(StatusCode), RespHeaders, RespBody),
     {'stop', 'http_error', State};
 
@@ -426,7 +426,7 @@ handle_info({'DOWN', Ref, 'process', Pid, Reason}
                   }=State
            ) ->
     lager:info("response pid ~p(~p) down: ~p", [Pid, Ref, Reason]),
-    publish_failed(Call, RequesterQ),
+    maybe_publish_failed(Call, RequesterQ),
     {'stop', 'normal', State#state{response_pid = 'undefined', response_ref = 'undefined'}};
 handle_info(_Info, State) ->
     lager:debug("unhandled message: ~p", [_Info]),
@@ -455,17 +455,14 @@ handle_event(_JObj, #state{response_pid=Pid
 %%------------------------------------------------------------------------------
 -spec terminate(any(), state()) -> 'ok'.
 terminate(_Reason, #state{response_pid=Pid}) when is_pid(Pid) ->
-    _ =
-        case is_process_alive(Pid) of
-            'true' ->
-                exit(Pid, 'kill');
-            'false' ->
-                ok
-        end,
+    exit(Pid, 'kill'),
     lager:info("pivot call terminating: ~p", [_Reason]);
 terminate(_Reason, #state{call=Call}) when _Reason == 'http_error' ->
     lager:debug("getting url not success, terminating call"),
-    kapps_call_command:hangup(Call),
+    case is_first_pivot_request(Call) of
+        'true' -> kapps_call_command:hangup(Call);
+        'false' -> 'ok'
+    end,
     lager:info("pivot call terminating: ~p", [_Reason]);
 terminate(_Reason, #state{}) ->
     lager:info("pivot call terminating: ~p", [_Reason]).
@@ -599,18 +596,23 @@ process_resp(RequesterQ, Call, CT, RespBody) ->
             {'stop', Call};
         'throw':{'error', 'unrecognized_cmds'} ->
             lager:info("no translators recognize the supplied commands: ~s", [RespBody]),
-            publish_failed(Call, RequesterQ),
+            maybe_publish_failed(Call, RequesterQ),
             {'stop', Call}
     end.
 
--spec publish_failed(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
-publish_failed(Call, RequesterQ) ->
-    PubFun = fun(P) -> kapi_pivot:publish_failed(RequesterQ, P) end,
-    kz_amqp_worker:cast([{<<"Call-ID">>, kapps_call:call_id(Call)}
-                        | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
-                        ]
-                       ,PubFun
-                       ).
+-spec maybe_publish_failed(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
+maybe_publish_failed(Call, RequesterQ) ->
+    case is_first_pivot_request(Call) of
+        'true' ->
+            PubFun = fun(P) -> kapi_pivot:publish_failed(RequesterQ, P) end,
+            kz_amqp_worker:cast([{<<"Call-ID">>, kapps_call:call_id(Call)}
+                                | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
+                                ]
+                               ,PubFun
+                               );
+        'false' ->
+            'skipped'
+    end.
 
 -spec uri(kz_term:ne_binary(), iolist()) -> kz_term:ne_binary().
 uri(URI, QueryString) ->
@@ -720,6 +722,10 @@ req_content_type(<<"form">>) ->
     "application/x-www-form-urlencoded";
 req_content_type(<<"json">>) ->
     "application/json".
+
+-spec is_first_pivot_request(kz_json:object()) -> boolean().
+is_first_pivot_request(Call) ->
+    1 == kzt_util:iteration(Call).
 
 %% send stop_call to pivot_call with a delay,
 %% to avoid race condition between stop_call and DOWN message
