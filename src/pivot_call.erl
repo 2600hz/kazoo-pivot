@@ -19,7 +19,6 @@
         ,new_request/3, new_request/4
         ,updated_call/2
         ,usurp_executor/1
-        ,get_state_and_terminate/2
         ]).
 
 %% gen_server callbacks
@@ -193,14 +192,9 @@ format_request_header(Key, Value, Acc) ->
 %% @doc Handling call messages.
 %% @end
 %%------------------------------------------------------------------------------
--spec handle_call(any(), kz_term:pid_ref(), state()) ->
-          {'reply', 'ok', state()} | {'reply', state(), state()}.
+-spec handle_call(any(), kz_term:pid_ref(), state()) -> {'reply', 'ok', state()}.
 handle_call({'updated_call', Call}, _From, State) ->
     {'reply', 'ok', State#state{call=Call}};
-
-handle_call(get_state, _From, State) ->
-    {'reply', State, State};
-
 handle_call(_Request, _From, State) ->
     {'reply', 'ok', State}.
 
@@ -343,7 +337,7 @@ handle_info({'http', {ReqId, {'error', Error}}}
            ) ->
     lager:info("recv error ~p : collected: ~s", [Error, lists:reverse(_RespBody)]),
     maybe_publish_failed(Call, RequesterQ),
-    {'stop', 'http_error', State};
+    {'stop', 'pivot_request_failed', State};
 
 handle_info({'http', {ReqId, 'stream', Chunk}}
            ,#state{request_id=ReqId
@@ -397,7 +391,7 @@ handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
     lager:info("recv client failure status code ~p", [StatusCode]),
     maybe_publish_failed(Call, RequesterQ),
     maybe_debug_resp(ShouldDebug, Call, kz_term:to_binary(StatusCode), RespHeaders, RespBody),
-    {'stop', 'http_error', State};
+    {'stop', 'pivot_request_failed', State};
 handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
            ,#state{request_id=ReqId
                   ,requester_queue=RequesterQ
@@ -409,7 +403,7 @@ handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
     lager:info("recv server failure status code ~p", [StatusCode]),
     maybe_publish_failed(Call, RequesterQ),
     maybe_debug_resp(ShouldDebug, Call, kz_term:to_binary(StatusCode), RespHeaders, RespBody),
-    {'stop', 'http_error', State};
+    {'stop', 'pivot_request_failed', State};
 
 handle_info({'DOWN', Ref, 'process', Pid, 'normal'}
            ,#state{response_pid=Pid
@@ -457,13 +451,9 @@ handle_event(_JObj, #state{response_pid=Pid
 terminate(_Reason, #state{response_pid=Pid}) when is_pid(Pid) ->
     exit(Pid, 'kill'),
     lager:info("pivot call terminating: ~p", [_Reason]);
-terminate(_Reason, #state{call=Call}) when _Reason == 'http_error' ->
-    lager:debug("getting url not success, terminating call"),
-    case is_first_pivot_request(Call) of
-        'true' -> kapps_call_command:hangup(Call);
-        'false' -> 'ok'
-    end,
-    lager:info("pivot call terminating: ~p", [_Reason]);
+terminate(Reason='pivot_request_failed', #state{call=Call}) ->
+    maybe_hangup_call(Call),
+    lager:info("pivot call terminating: ~p", [Reason]);
 terminate(_Reason, #state{}) ->
     lager:info("pivot call terminating: ~p", [_Reason]).
 
@@ -539,12 +529,12 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
     case process_resp(RequesterQ, Call, CT, RespBody) of
         {'stop_with_response', Call1} -> stop_with_response(Srv, Call1);
         {'stop', Call1} ->
-            get_state_and_terminate(Srv, Call1);
+            stop_call_after(Srv, Call1);
         {'ok', Call1} ->
-            get_state_and_terminate(Srv, Call1);
+            stop_call_after(Srv, Call1);
         {'usurp', _Call1} -> usurp_executor(Srv);
         {'request', Call1} ->
-            _ = updated_call(Srv, kzt_util:increment_iteration(Call1)),
+            updated_call(Srv, kzt_util:increment_iteration(Call1)),
             new_request(Srv
                        ,kzt_util:get_voice_uri(Call1)
                        ,kzt_util:get_voice_uri_method(Call1)
@@ -611,7 +601,7 @@ maybe_publish_failed(Call, RequesterQ) ->
                                ,PubFun
                                );
         'false' ->
-            'skipped'
+            'skip'
     end.
 
 -spec uri(kz_term:ne_binary(), iolist()) -> kz_term:ne_binary().
@@ -727,21 +717,21 @@ req_content_type(<<"json">>) ->
 is_first_pivot_request(Call) ->
     1 == kzt_util:iteration(Call).
 
-%% send stop_call to pivot_call with a delay,
+-spec maybe_hangup_call(kz_json:object()) -> 'ok'.
+maybe_hangup_call(Call) ->
+    case not is_first_pivot_request(Call) of
+        'true' -> kapps_call_command:hangup(Call);
+        'false' -> 'ok'
+    end.
+
+%% after 100ms, send stop_call to pivot_call process,
 %% to avoid race condition between stop_call and DOWN message
-%% of handle_resp process when it's done the task
--spec get_state_and_terminate(kz_term:pid(), kapps_call:call()) -> ok.
-get_state_and_terminate(Srv, Call) ->
+%% of handle_resp process when it's done its task
+-spec stop_call_after(kz_term:pid(), kapps_call:call()) -> ok.
+stop_call_after(Srv, Call) ->
     Fun = fun() ->
-                  timer:sleep(?MILLISECONDS_IN_SECOND/10),
-                  CurrentState = gen_listener:call(Srv, get_state),
-                  case {CurrentState#state.response_pid, CurrentState#state.response_ref} of
-                      {'undefined', 'undefined'} ->
-                          lager:info("translator process completed, died, state is up to date"),
-                          stop_call(Srv, Call);
-                      _ ->
-                          ok
-                  end
+                  timer:sleep(?MILLISECONDS_IN_SECOND div 10),
+                  stop_call(Srv, Call)
           end,
     kz_process:spawn(Fun),
     ok.
