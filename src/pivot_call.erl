@@ -234,6 +234,7 @@ handle_cast({'request', Uri, Method, Params}
             };
         _ ->
             maybe_publish_failed(Call, RequesterQ),
+            maybe_hangup_call(Call),
             {'stop', 'normal', State}
     end;
 
@@ -601,7 +602,7 @@ maybe_publish_failed(Call, RequesterQ) ->
                                ,PubFun
                                );
         'false' ->
-            'skip'
+            'ok'
     end.
 
 -spec uri(kz_term:ne_binary(), iolist()) -> kz_term:ne_binary().
@@ -719,19 +720,17 @@ is_first_pivot_request(Call) ->
 
 -spec maybe_hangup_call(kz_json:object()) -> 'ok'.
 maybe_hangup_call(Call) ->
-    case not is_first_pivot_request(Call) of
-        'true' -> kapps_call_command:hangup(Call);
-        'false' -> 'ok'
+    case is_first_pivot_request(Call) of
+        'true' -> 'ok';
+        'false' -> kapps_call_command:hangup(Call)
     end.
 
-%% after 100ms, send stop_call to pivot_call process,
+%% after 10ms, send stop_call to pivot_call process,
 %% to avoid race condition between stop_call and DOWN message
 %% of handle_resp process when it's done its task
--spec stop_call_after(kz_term:pid(), kapps_call:call()) -> ok.
+-spec stop_call_after(kz_term:pid(), kapps_call:call()) -> {'ok', timer:tref()} | {'error', any()}.
 stop_call_after(Srv, Call) ->
-    Fun = fun() ->
-                  timer:sleep(?MILLISECONDS_IN_SECOND div 10),
-                  stop_call(Srv, Call)
-          end,
-    kz_process:spawn(Fun),
-    ok.
+    timer:apply_after(?MILLISECONDS_IN_SECOND div 100
+                     ,?MODULE
+                     ,stop_call
+                     ,[Srv, Call]).
