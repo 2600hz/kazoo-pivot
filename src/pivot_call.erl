@@ -91,7 +91,7 @@ start_link(Call, JObj) ->
                            ).
 
 -spec stop_call(pid(), kapps_call:call()) -> 'ok'.
-stop_call(Srv, Call) -> gen_listener:cast(Srv, {'stop', Call}).
+stop_call(Srv, Call) -> gen_listener:cast(Srv, {'stop_call', Call}).
 
 -spec stop_with_response(pid(), kapps_call:call()) -> 'ok'.
 stop_with_response(Srv, Call) ->
@@ -250,7 +250,7 @@ handle_cast({'gen_listener', {'created_queue', Q}}
     new_request(self(), VoiceUri, Method, BaseParams),
     {'noreply', State#state{call=kapps_call:set_controller_queue(Q, Call)}};
 
-handle_cast({'stop', Call}
+handle_cast({'stop_call', Call}
            ,#state{cdr_uri='undefined'}=State
            ) ->
     lager:debug("no cdr callback, terminating call"),
@@ -263,7 +263,7 @@ handle_cast({'cdr', _JObj}
                   }=State
            ) ->
     lager:debug("recv cdr for call, no cdr uri though"),
-    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'stop', Call}),
+    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
     {'noreply', State};
 handle_cast({'cdr', JObj}
            ,#state{cdr_uri=Url
@@ -285,7 +285,7 @@ handle_cast({'cdr', JObj}
             lager:debug("failed to send CDR: ~p", [_E])
     end,
 
-    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'stop', Call}),
+    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
     {'noreply', State};
 
 handle_cast({'add_event_handler', {Pid, _Ref}}
@@ -319,7 +319,7 @@ handle_cast(_Req, State) ->
 %%------------------------------------------------------------------------------
 -spec handle_info(any(), state()) -> {'noreply', state()} |
           {'stop', any(), state()}.
-handle_info({'stop', _Call}, State) ->
+handle_info({'hard_stop', _Call}, State) ->
     {'stop', 'normal', State};
 handle_info({'http', {ReqId, 'stream_start', Hdrs}}
            ,#state{request_id=ReqId}=State
@@ -520,7 +520,7 @@ send(Call, Uri, Method, ReqHdrs, ReqBody, TimeoutMs, Debug) ->
 normalize_resp_headers(Headers) ->
     [{kz_term:to_lower_binary(K), kz_term:to_binary(V)} || {K, V} <- Headers].
 
--spec handle_resp(kz_term:api_binary(), kapps_call:call(), kz_term:ne_binary(), binary(), pid()) -> 'ok'.
+-spec handle_resp(kz_term:api_binary(), kapps_call:call(), kz_term:api_ne_binary(), binary(), pid()) -> 'ok'.
 handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
     _ = kz_amqp_channel:consumer_pid(AMQPConsumer),
 
@@ -528,12 +528,12 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
     Srv = kzt_util:get_amqp_listener(Call),
 
     case process_resp(RequesterQ, Call, CT, RespBody) of
-        {'stop_with_response', Call1} -> stop_with_response(Srv, Call1);
-        {'stop', Call1} ->
+        {'stop_call', Call1} ->
             stop_call_after(Srv, Call1);
-        {'ok', Call1} ->
-            stop_call_after(Srv, Call1);
-        {'usurp', _Call1} -> usurp_executor(Srv);
+        {'stop_with_response', Call1} ->
+            stop_with_response(Srv, Call1);
+        {'usurp', _Call1} ->
+            usurp_executor(Srv);
         {'request', Call1} ->
             updated_call(Srv, kzt_util:increment_iteration(Call1)),
             new_request(Srv
@@ -542,53 +542,46 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
                        )
     end.
 
--spec process_resp(kz_term:api_binary(), kapps_call:call(), list() | binary(), binary()) ->
-          {'stop', kapps_call:call()} |
+-spec process_resp(kz_term:api_binary(), kapps_call:call(), kz_term:api_ne_binary(), binary()) ->
+          {'stop_call', kapps_call:call()} |
           {'stop_with_response', kapps_call:call()} |
-          {'ok', kapps_call:call()} |
           {'request', kapps_call:call()} |
           {'usurp', kapps_call:call()}.
 process_resp(_, Call, _, <<>>) ->
     lager:debug("no response body, finishing up"),
-    {'stop', Call};
-process_resp(RequesterQ, Call, Hdrs, RespBody) when is_list(Hdrs) ->
-    handle_resp(RequesterQ, Call, props:get_value(<<"content-type">>, Hdrs), RespBody, kz_amqp_channel:consumer_pid());
+    {'stop_call', Call};
 process_resp(RequesterQ, Call, CT, RespBody) ->
     lager:info("finding translator for content type ~s", [CT]),
     try kzt_translator:exec(RequesterQ, Call, CT, RespBody) of
-        {'stop', _Call1}=Stop ->
+        {'stop', Call1} ->
             lager:debug("translator says stop"),
-            Stop;
+            {'stop_call', Call1};
         {'stop_with_response', _Call1}=Stop ->
-            lager:debug("translator says stop because of rejecting call"),
+            lager:debug("translator says stop because it already hungup the call"),
             Stop;
-        {'ok', _Call1}=OK ->
-            lager:debug("translator says ok, continuing"),
-            OK;
+        {'ok', Call1} ->
+            lager:debug("translator rendered successfully, stopping pivot call"),
+            {'stop_call', Call1};
         {'request', _Call1}=Req ->
             lager:debug("translator says make another request"),
             Req;
-        {'usurp', _Call1}=U ->
+        {'usurp', _Call1}=Usurp ->
             lager:info("translator has been usurped"),
-            U;
+            Usurp;
         {'error', Call1} ->
             lager:debug("error in translator, FAIL"),
-            {'stop', Call1};
+            {'stop_call', Call1};
         {'error', Call1, Errors} ->
             lager:error("validation errors in response, FAIL"),
             _ = debug_error(Call1, Errors, RespBody),
-            {'stop', Call1}
+            {'stop_call', Call1}
     catch
         'throw':{'json', Msg, Before, After} ->
             debug_json_error(Call, Msg, Before, After, RespBody),
-            {'stop', Call};
-        'throw':{'error', 'no_translators', _CT} ->
-            lager:info("unknown content type ~s, no translators", [_CT]),
-            {'stop', Call};
+            {'stop_call', Call};
         'throw':{'error', 'unrecognized_cmds'} ->
             lager:info("no translators recognize the supplied commands: ~s", [RespBody]),
-            {'stop', Call}
-    end.
+            {'stop_call', Call}
     end.
 
 -spec uri(kz_term:ne_binary(), iolist()) -> kz_term:ne_binary().
