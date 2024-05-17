@@ -233,8 +233,7 @@ handle_cast({'request', Uri, Method, Params}
                         }
             };
         _ ->
-            maybe_publish_failed(Call, RequesterQ),
-            maybe_hangup_call(Call),
+            publish_failed_or_hangup(Call, RequesterQ),
             {'stop', 'normal', State}
     end;
 
@@ -337,8 +336,8 @@ handle_info({'http', {ReqId, {'error', Error}}}
                   }=State
            ) ->
     lager:info("recv error ~p : collected: ~s", [Error, lists:reverse(_RespBody)]),
-    maybe_publish_failed(Call, RequesterQ),
-    {'stop', 'pivot_request_failed', State};
+    publish_failed_or_hangup(Call, RequesterQ),
+    {'stop', 'normal', State};
 
 handle_info({'http', {ReqId, 'stream', Chunk}}
            ,#state{request_id=ReqId
@@ -390,9 +389,9 @@ handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
            )
   when (StatusCode - 400) < 100 ->
     lager:info("recv client failure status code ~p", [StatusCode]),
-    maybe_publish_failed(Call, RequesterQ),
+    publish_failed_or_hangup(Call, RequesterQ),
     maybe_debug_resp(ShouldDebug, Call, kz_term:to_binary(StatusCode), RespHeaders, RespBody),
-    {'stop', 'pivot_request_failed', State};
+    {'stop', 'normal', State};
 handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
            ,#state{request_id=ReqId
                   ,requester_queue=RequesterQ
@@ -402,9 +401,9 @@ handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
            )
   when (StatusCode - 500) < 100 ->
     lager:info("recv server failure status code ~p", [StatusCode]),
-    maybe_publish_failed(Call, RequesterQ),
+    publish_failed_or_hangup(Call, RequesterQ),
     maybe_debug_resp(ShouldDebug, Call, kz_term:to_binary(StatusCode), RespHeaders, RespBody),
-    {'stop', 'pivot_request_failed', State};
+    {'stop', 'normal', State};
 
 handle_info({'DOWN', Ref, 'process', Pid, 'normal'}
            ,#state{response_pid=Pid
@@ -421,7 +420,7 @@ handle_info({'DOWN', Ref, 'process', Pid, Reason}
                   }=State
            ) ->
     lager:info("response pid ~p(~p) down: ~p", [Pid, Ref, Reason]),
-    maybe_publish_failed(Call, RequesterQ),
+    publish_failed_or_hangup(Call, RequesterQ),
     {'stop', 'normal', State#state{response_pid = 'undefined', response_ref = 'undefined'}};
 handle_info(_Info, State) ->
     lager:debug("unhandled message: ~p", [_Info]),
@@ -450,13 +449,14 @@ handle_event(_JObj, #state{response_pid=Pid
 %%------------------------------------------------------------------------------
 -spec terminate(any(), state()) -> 'ok'.
 terminate(_Reason, #state{response_pid=Pid}) when is_pid(Pid) ->
-    exit(Pid, 'kill'),
-    lager:info("pivot call terminating: ~p", [_Reason]);
-terminate(Reason='pivot_request_failed', #state{call=Call}) ->
-    maybe_hangup_call(Call),
-    lager:info("pivot call terminating: ~p", [Reason]);
-terminate(_Reason, #state{}) ->
-    lager:info("pivot call terminating: ~p", [_Reason]).
+    lager:info("pivot call terminating: ~p", [_Reason]),
+    _ = case erlang:is_process_alive(Pid) of
+            'true' ->
+                lager:debug("exiting response process ~p", [Pid]),
+                exit(Pid, 'kill');
+            'false' -> 'ok'
+        end,
+        'ok'.
 
 %%------------------------------------------------------------------------------
 %% @doc Convert process state when code is changed.
@@ -587,22 +587,8 @@ process_resp(RequesterQ, Call, CT, RespBody) ->
             {'stop', Call};
         'throw':{'error', 'unrecognized_cmds'} ->
             lager:info("no translators recognize the supplied commands: ~s", [RespBody]),
-            maybe_publish_failed(Call, RequesterQ),
             {'stop', Call}
     end.
-
--spec maybe_publish_failed(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
-maybe_publish_failed(Call, RequesterQ) ->
-    case is_first_pivot_request(Call) of
-        'true' ->
-            PubFun = fun(P) -> kapi_pivot:publish_failed(RequesterQ, P) end,
-            kz_amqp_worker:cast([{<<"Call-ID">>, kapps_call:call_id(Call)}
-                                | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
-                                ]
-                               ,PubFun
-                               );
-        'false' ->
-            'ok'
     end.
 
 -spec uri(kz_term:ne_binary(), iolist()) -> kz_term:ne_binary().
@@ -718,12 +704,21 @@ req_content_type(<<"json">>) ->
 is_first_pivot_request(Call) ->
     1 == kzt_util:iteration(Call).
 
--spec maybe_hangup_call(kz_json:object()) -> 'ok'.
-maybe_hangup_call(Call) ->
+-spec publish_failed_or_hangup(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
+publish_failed_or_hangup(Call, RequesterQ) ->
     case is_first_pivot_request(Call) of
-        'true' -> 'ok';
+        'true' -> publish_failed(Call, RequesterQ);
         'false' -> kapps_call_command:hangup(Call)
     end.
+
+-spec publish_failed(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
+publish_failed(Call, RequesterQ) ->
+    PubFun = fun(P) -> kapi_pivot:publish_failed(RequesterQ, P) end,
+    kz_amqp_worker:cast([{<<"Call-ID">>, kapps_call:call_id(Call)}
+                        | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
+                        ]
+                       ,PubFun
+                       ).
 
 %% after 10ms, send stop_call to pivot_call process,
 %% to avoid race condition between stop_call and DOWN message
