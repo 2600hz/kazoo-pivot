@@ -257,6 +257,14 @@ handle_cast({'stop_call', Call}
     kapps_call_command:hangup(Call),
     {'stop', 'normal', State};
 
+handle_cast({'stop_call', Call}, #state{}=State) ->
+    lager:debug("requested to stop while CDR uri is defined, hanging call waiting for cdrs before going down, hard stopping in 30 seconds"),
+    kapps_call_command:hangup(Call),
+
+    %% hard stop if hangup or cdr was unsuccessful.
+    erlang:send_after(30 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
+    {'noreply', State};
+
 handle_cast({'cdr', _JObj}
            ,#state{cdr_uri='undefined'
                   ,call=Call
@@ -286,7 +294,7 @@ handle_cast({'cdr', JObj}
     end,
 
     erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
-    {'noreply', State};
+    {'noreply', State#state{cdr_uri='undefined'}};
 
 handle_cast({'add_event_handler', {Pid, _Ref}}
            ,#state{response_event_handlers=Pids}=State
@@ -703,8 +711,12 @@ is_first_pivot_request(Call) ->
 publish_failed_or_hangup(Call, RequesterQ) ->
     case is_first_pivot_request(Call) of
         'true' -> publish_failed(Call, RequesterQ);
-        'false' -> kapps_call_command:hangup(Call)
+        'false' -> maybe_hangup(Call)
     end.
+
+-spec maybe_hangup(kapps_call:call() | undefined) -> 'ok'.
+maybe_hangup('undefined') -> 'ok';
+maybe_hangup(Call) -> kapps_call_command:hangup(Call).
 
 -spec publish_failed(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
 publish_failed(Call, RequesterQ) ->
