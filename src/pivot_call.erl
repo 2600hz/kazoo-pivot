@@ -448,15 +448,17 @@ handle_event(_JObj, #state{response_pid=Pid
 %% @end
 %%------------------------------------------------------------------------------
 -spec terminate(any(), state()) -> 'ok'.
-terminate(_Reason, #state{response_pid=Pid}) when is_pid(Pid) ->
+terminate(_Reason, #state{response_pid=Pid}) ->
     lager:info("pivot call terminating: ~p", [_Reason]),
-    _ = case erlang:is_process_alive(Pid) of
+    _ = case is_pid(Pid)
+            andalso erlang:is_process_alive(Pid)
+        of
             'true' ->
                 lager:debug("exiting response process ~p", [Pid]),
                 exit(Pid, 'kill');
             'false' -> 'ok'
         end,
-        'ok'.
+    'ok'.
 
 %%------------------------------------------------------------------------------
 %% @doc Convert process state when code is changed.
