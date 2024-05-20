@@ -128,7 +128,7 @@ handle_call_event(JObj, Props) ->
             Pid = props:get_value('server', Props),
             gen_listener:cast(Pid, {'cdr', JObj});
         {_Cat, _Evt} ->
-            'ok'
+            lager:debug("ignoring event ~s/~s", [_Cat, _Evt])
     end.
 
 %%%=============================================================================
