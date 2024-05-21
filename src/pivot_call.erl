@@ -1,5 +1,5 @@
 %%%-----------------------------------------------------------------------------
-%%% @copyright (C) 2012-2023, 2600Hz
+%%% @copyright (C) 2012-2024, 2600Hz
 %%% @doc Handle processing of the pivot call
 %%% @author James Aimonetti
 %%%
@@ -90,6 +90,11 @@ start_link(Call, JObj) ->
 
 -spec stop_call(pid(), kapps_call:call()) -> 'ok'.
 stop_call(Srv, Call) -> gen_listener:cast(Srv, {'stop', Call}).
+
+-spec stop_with_response(pid(), kapps_call:call()) -> 'ok'.
+stop_with_response(Srv, Call) ->
+    erlang:send_after(?MILLISECONDS_IN_SECOND div 100, Srv, {'stop', Call}),
+    'ok'.
 
 -spec new_request(pid(), kz_term:ne_binary(), http_method()) -> 'ok'.
 new_request(Srv, Uri, Method) ->
@@ -511,6 +516,7 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
     Srv = kzt_util:get_amqp_listener(Call),
 
     case process_resp(RequesterQ, Call, CT, RespBody) of
+        {'stop_with_response', Call1} -> stop_with_response(Srv, Call1);
         {'stop', Call1} -> stop_call(Srv, Call1);
         {'ok', Call1} -> stop_call(Srv, Call1);
         {'usurp', _Call1} -> usurp_executor(Srv);
@@ -524,6 +530,7 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
 
 -spec process_resp(kz_term:api_binary(), kapps_call:call(), list() | binary(), binary()) ->
           {'stop', kapps_call:call()} |
+          {'stop_with_response', kapps_call:call()} |
           {'ok', kapps_call:call()} |
           {'request', kapps_call:call()} |
           {'usurp', kapps_call:call()}.
@@ -537,6 +544,9 @@ process_resp(RequesterQ, Call, CT, RespBody) ->
     try kzt_translator:exec(RequesterQ, Call, CT, RespBody) of
         {'stop', _Call1}=Stop ->
             lager:debug("translator says stop"),
+            Stop;
+        {'stop_with_response', _Call1}=Stop ->
+            lager:debug("translator says stop because of rejecting call"),
             Stop;
         {'ok', _Call1}=OK ->
             lager:debug("translator says ok, continuing"),
