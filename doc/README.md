@@ -7,6 +7,8 @@ Pivot expects a response with appropriate TwiML XML or Kazoo Callflow JSON, and 
 
 Pivot works with an existing call and cannot iniate a call by itself.
 
+Marvel at how easy that was.
+
 ## How Pivot works
 
 You start by creating a special Callfow in your account with `pivot` module. When some one calls the number assigned to that Callflow, callflow uses
@@ -119,7 +121,7 @@ You application must respond in maximum of 5 seconds before the Pivot coniders t
 
 Pivot expect `200 OK` HTTP code with `Content-Type` header to indicate the translator to
 use for processing the response. If no `Content-Type` is set, `text/xml` will be assumed.
-Any not supported `Content-Type` will result in failure and Pivot hangup the call.
+Any not supported `Content-Type` will result in failure.
 
 Your application may choose to respond a Pivot any supported response translator that Pivot supports.
 Each response can use different translator independably.
@@ -128,12 +130,36 @@ Please be advise if your application does not need to handle the call, you are s
 responsible to end the call with either translator. For quick no answer, your application
 can send `200 OK`, with `Content-Type: aplication/xml` and body `<Response />`.
 
-If HTTP request to your application fails in intial request or any other subsquent requests ails, Pivot will stop and hangup the caller.
+If HTTP request to your application fails in intial request or any other subsquent requests ails, Pivot will stop processing with failure.
+
+Pivot will stop with failure in making HTTP request or bad response or any
+failure in processing the the reponse (such as response validation failed), and Pivot will:
+
+- If the failure was for the inital request of Pivot Callflow, Pivot will send the failure
+  back to Callflow application to process the failed branch of the flow if there is any,
+  if no failed branch found the caller will be hangup.
+- For any subsquent requests after the inital request, Pivot will hangup the caller
+immediately.
+
 
 ### Pivot Translator
 
 @TODO description
 
-* [Kazoo JSON](./kazoo/README.md): This is same Callflow JSON that you already familiar with and happey with. Using this translator you have the
-full power of Callflow at your hand and behave exactly like a normal Callflow will act. This gives you more power to control and dynamically create callflows per call basis.
-* [TwiML](./twiml/README.md): THis taylored more to epople that want easy migration to Kazoo from other platform. This is option gives a more restricted way to handle the call compare to Callflow.
+
+#### Kazoo JSON Translator
+
+[Kazoo JSON JSON](./kazoo/README.md) is the same Callflow JSON that you already familiar with and are happey with. Using this translator you have the
+full power of Callflow at your hand and behave exactly like a normal Callflow will act.
+
+This gives you more power to control and dynamically create callflows per call basis.
+
+To use this translator set your application response `Content-Type` header to `application/json`.
+
+For more complete reference of available actions please see Callfow Actions Reference manual.
+
+#### TwiML Translator
+
+[TwiML](./twiml/README.md) is taylored more to epople that want easy migration to Kazoo from other platform. This is option gives a more restricted way to handle the call compare to Callflow.
+
+To sue thus please set Content-Type header to any of value: `application/xml`, `text/xml`
