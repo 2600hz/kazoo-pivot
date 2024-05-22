@@ -1,35 +1,11 @@
-# TwiML Format
+# Pivot TwiML Response
 
 Pivot supports a subset of TwiML to help ease you into Pivot with an existing TwiML-based application.
 
+@TODO a bit decription on how twiml translator works, its culprits, differences to actual twiml, general erros it may returns
+
 ## Core Supported
 
-### Default Request Data included
-
-| Request Parameter | Kazoo Name     | Description                                                                      |
-| ----------------- | -------------- | -------------------------------------------------------------------------------- |
-| CallerName        | Caller-ID-Name | Name of the caller, if any                                                       |
-| Direction         | Direction      | Direction of the call (outbound if Kazoo originated the call, inbound otherwise) |
-| ApiVerson         | N/A            | Version string related to API changes                                            |
-| CallStatus        | N/A            | What state the call is currently in                                              |
-| To                | To-User        | Dialed number                                                                    |
-| From              | From-User      | Caller's number, if available                                                    |
-| AccountSid        | Account-ID     | Account ID processing the call                                                   |
-| CallSid           | Call-ID        | Unique identifier of the call leg                                                |
-
-### Optional/Conditional Request Data
-
-| Request Parameter | Kazoo Name          | Description                                           |
-| ----------------- | ------------------- | ----------------------------------------------------- |
-| RecordingUrl      | Recording-URL       | Where a recording will be sent (via HTTP PUT request) |
-| RecordingDuration | Recording-Duration  | Length of the recording, if available                 |
-| RecordingSid      | Media-Name          | Name of the recording file                            |
-| Digits            | DTMF-Pressed        | The DTMF(s) (touch tone) pressed by the caller        |
-| DialCallStatus    | N/A                 | Call status of the b-leg                              |
-| DialCallSid       | Other-Leg-Unique-ID | Call-ID of the b-leg                                  |
-| DialCallDuration  | Billing-Seconds     | How many billable seconds the call lasted             |
-
-Other optional data includes user-defined key/value pairs stored using the <Set> verb below.
 
 ### TwiML Verbs
 
