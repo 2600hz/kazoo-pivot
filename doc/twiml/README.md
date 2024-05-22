@@ -1,77 +1,47 @@
-# TwiML Format
+# Pivot TwiML
 
-Pivot supports a subset of TwiML to help ease you into Pivot with an existing TwiML-based application.
+Pivot supports a subset of TwiML to help ease you into Pivot with an existing TwiML-based application.  
 
-## Core Supported
+To use this Pivot TwiML a developer server must respond to Pivot requests with `Content-Type:
+application/xml` HTTP header and a valid TwiML document.  
 
-### Default Request Data included
+Pivot TwiML is an xml scripting language for routing and controlling calls in {% BRAND_NAME %}. 
+Documents begin with an XML declaration and have one root element, `<Response>`.  
 
-| Request Parameter | Kazoo Name     | Description                                                                      |
-| ----------------- | -------------- | -------------------------------------------------------------------------------- |
-| CallerName        | Caller-ID-Name | Name of the caller, if any                                                       |
-| Direction         | Direction      | Direction of the call (outbound if Kazoo originated the call, inbound otherwise) |
-| ApiVerson         | N/A            | Version string related to API changes                                            |
-| CallStatus        | N/A            | What state the call is currently in                                              |
-| To                | To-User        | Dialed number                                                                    |
-| From              | From-User      | Caller's number, if available                                                    |
-| AccountSid        | Account-ID     | Account ID processing the call                                                   |
-| CallSid           | Call-ID        | Unique identifier of the call leg                                                |
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <!-- your instructions goes here -->
+</Response>
+```
 
-### Optional/Conditional Request Data
+For example, a developer server could respond to a Pivot request with instructions to play media 
+stored with the {% brand_name %} account:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Play>ad303920d65b486f1ba0e2c3fe274418</Play>
+</Response>
+```
 
-| Request Parameter | Kazoo Name          | Description                                           |
-| ----------------- | ------------------- | ----------------------------------------------------- |
-| RecordingUrl      | Recording-URL       | Where a recording will be sent (via HTTP PUT request) |
-| RecordingDuration | Recording-Duration  | Length of the recording, if available                 |
-| RecordingSid      | Media-Name          | Name of the recording file                            |
-| Digits            | DTMF-Pressed        | The DTMF(s) (touch tone) pressed by the caller        |
-| DialCallStatus    | N/A                 | Call status of the b-leg                              |
-| DialCallSid       | Other-Leg-Unique-ID | Call-ID of the b-leg                                  |
-| DialCallDuration  | Billing-Seconds     | How many billable seconds the call lasted             |
+Pivot TwiML elements are called **terms**. Pivot renders terms one at a time from top to bottom, 
+waiting for each term to complete before beginning to render the next term. Some terms have special
+nested behaviors, see the documentation for individual terms for more information.
 
-Other optional data includes user-defined key/value pairs stored using the <Set> verb below.
 
-### TwiML Verbs
+## Pivot TwiML Terms
 
-| Verb     | Description                                              | Nestable Verbs and Nouns                                          |
-| -------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
-| <Dial>   | Connect the caller to other endpoints                    | plain text DID, <Conference>, <Queue>, <Number>, <User>, <Device> |
-| <Record> | Record the caller                                        |                                                                   |
-| <Gather> | Collect DTMFs from the caller                            | <Play>, <Say>                                                     |
-| <Play>   | Play a media file (mp3, wav) to the caller               |                                                                   |
-| Say      | Use a TTS engine to say the supplied text                |                                                                   |
-| Redirect | Like an HTTP Redirect, make another HTTP request         | <Variable>                                                        |
-| Pause    | Pause callflow execution for supplied number of seconds  |                                                                   |
-| Hangup   | Hangup the caller                                        |                                                                   |
-| Reject   | Reject (and don't answer - won't start billing) the call |                                                                   |
+Fewer of {% BRAND_NAME %}'s suite of call actions and features are available using Pivot TwiML than Pivot 
+Callflow Json.
 
-### Custom Verbs
-
-| Verb  | Description | Nestable Nouns |
-| ----  | ----------- | -------------- |
-| <Set> | Key value pair(s) to store along-side the call||
-
-### Core TwiML Nouns
-
-| Noun         | Description                                                        |
-| ------------ | ------------------------------------------------------------------ |
-| <Conference> | Conference room endpoint for <Dial>                                |
-| <Queue>      | Call queue to line callers up in                                   |
-| <Number>     | DID with extended attributes                                       |
-| <User>       | ID of an existing Kazoo User (works like the User callflow element |
-| <Device>     | ID of an existing Kazoo Device                                     |
-| <Sip>        | SIP URI to dial                                                    |
-
-### Custom Nouns
-
-| Noun       | Description                                                                   |
-| ---------- | ----------------------------------------------------------------------------- |
-| <Variable> | Includes 'key' and 'value' attributes; values will be put subsequent requests |
-
-## Using Pivot
-
-1. Create a Pivot callflow to point to your webserver URL
-2. When a call is placed to the Pivot callflow, your webserver will receive a request
-3. Generate a response, using your language of choice, in a supported format
-    1. See [sample](https://github.com/2600hz/kazoo/tree/master/applications/pivot/priv/samples) for some example PHP scripts
-4. Marvel at how easy that was
+| Verb                          | Description                                               | Nestable terms                                                                                                                                         |
+|-------------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`<Dial>`](./dial.md)         | Connect the caller to other endpoints                     | plain text numbers, [`<Conference>`](./dial/conference.md), [`<Number>`](./dial/number.md), [`<User>`](./dial/user.md), [`<Device>`](./dial/device.md) |
+| [`<Record>`](./record.md)     | Record the caller                                         |                                                                                                                                                        |
+| [`<Gather>`](./gather.md)     | Collect DTMFs from the caller                             | `<Play>`, `<Say>`                                                                                                                                      |
+| [`<Play>`](./play.md)         | Play a media file (mp3, wav) to the caller                |                                                                                                                                                        |
+| [`<Say>`](./say.md)           | Use a TTS engine to say supplied text                     |                                                                                                                                                        |
+| [`<Redirect>`](./redirect.md) | Like an HTTP Redirect, make another HTTP Pivot request    | `<Variable>`                                                                                                                                           |
+| [`<Pause>`](./pause.md)       | Pause callflow execution for a number of seconds          |                                                                                                                                                        |
+| [`<Hangup>`](./hangup.md)     | Hangup the call                                           |                                                                                                                                                        |
+| [`<Reject>`](./reject.md)     | Reject (without answering - won't start billing) the call |                                                                                                                                                        |

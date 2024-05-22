@@ -1,16 +1,16 @@
-# Kazoo JSON Overview
+# {% BRAND_NAME %} JSON Overview
 
-Sometimes Kazoo's callflow builder doesn't match your needs, integrate with your applications, or provide the experience for your caller that you desire. Fortunately, the building blocks are available for you to play with as you see fit!
+Sometimes {% BRAND_NAME %}'s callflow builder doesn't match your needs, integrate with your applications, or provide the experience for your caller that you desire. Fortunately, the building blocks are available for you to play with as you see fit!
 
-By routing a call to a Pivot callflow action, Kazoo will make an HTTP request to your web server asking for the callflow to process for that specific call (versus the one-size-fits-all approach in the normal callflow builder).
+By routing a call to a Pivot callflow action, {% BRAND_NAME %} will make an HTTP request to your web server asking for the callflow to process for that specific call (versus the one-size-fits-all approach in the normal callflow builder).
 
-This could be best illustrated with an example, no?
+This could be best illustrated with an example, shall we?
 
 ## Building Time-based routing
 
 We want to add time-based rules when deciding how to route our office's main number (this exists with the `temporal_route` callflow action already, but we're trying to make a point!). Following a "typical" office's hours, we are open 9am-5pm (9:00 to 17:00). During that time, we'd like to ring the front desk's phone. Outside of those hours, we'd like calls to go directly to the company's voicemail box.
 
-### Build the Kazoo Things
+### Build the {% BRAND_NAME %} Things
 
 Based on the above goals, we need to build:
 
@@ -27,7 +27,7 @@ The main number callflow should be:
             Url: http://your.webserver.com/path/to/main_number_tod.php
 ```
 
-Now, whenever this number is called, Kazoo will query your URL for callflow to execute.
+Now, whenever this number is called, {% BRAND_NAME %} will query your URL for callflow to execute.
 
 ### Build `main_number_tod.php`
 

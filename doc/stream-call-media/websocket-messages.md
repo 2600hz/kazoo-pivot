@@ -60,6 +60,23 @@ and call that initiated it.
 It is sent only once.
 
 
+<!-- uncomment and remove other table after RELEASE-334 -->
+<!-- | Name                           | Description                                                                                                                                                             | -->
+<!-- |--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------| -->
+<!-- | `event`                        | Always set to `start`                                                                                                                                                   | -->
+<!-- | `sequenceNumber`               | A number incrementing by one each time Pivot sends a message to track message order.                                                                                    | -->
+<!-- | `streamSid`                    | The unique ID for this steam which your server should use in replies.                                                                                                   | -->
+<!-- | `start`                        |                                                                                                                                                                         | -->
+<!-- | `start.accountSid`             | The unique ID of the account the call is associated with                                                                                                                | -->
+<!-- | `start.streamSid`              | The unique ID of the stream                                                                                                                                             | -->
+<!-- | `start.callSid`                | The unique ID of the incoming call                                                                                                                                      | -->
+<!-- | `start.tracks`                 | Array of strings indicating the call's media flow for the stream, possible values are `inbound`, and `outbound`                                                         | -->
+<!-- | `start.mediaFormat`            |                                                                                                                                                                         | -->
+<!-- | `start.mediaFormat.encoding`   | The codec used for encoding for audio in [`media`](#media) messages, configured by [`<Stream>` `audioCodec`](../twiml/stream.md#audiocodec). Possible values are `audio/L16`, and `audio/x-mulaw` | -->
+<!-- | `start.mediaFormat.sampleRate` | Sample rate for [audio](#media), configured by [`<Stream>` `sampleRate`](../twiml/stream.md#samplerate)                                                                 | -->
+<!-- | `start.mediaFormat.channels`   | The number of channels in the stream's [audio](#media), configured by [`<Stream>` `track`](../twiml/stream.md#track)                                                    | -->
+<!-- | `start.customParameters`       | The custom parameters as-is set by nesting in [`<Stream>`](../twiml/stream.md#sending-custom-parameters)                                                                | -->
+
 | Name                           | Description                                                                                                                                                             |
 |--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `event`                        | Always set to `start`                                                                                                                                                   |
@@ -71,7 +88,7 @@ It is sent only once.
 | `start.callSid`                | The unique ID of the incoming call                                                                                                                                      |
 | `start.tracks`                 | Array of strings indicating the call's media flow for the stream, possible values are `inbound`, and `outbound`                                                         |
 | `start.mediaFormat`            |                                                                                                                                                                         |
-| `start.mediaFormat.encoding`   | The codec used for encoding for audio in [`media`](#media) messages, configured by [`<Stream>` `audioCodec`](../twiml/stream.md#audiocodec). Possible values are `audio/L16`, and `audio/x-mulaw` |
+| `start.mediaFormat.encoding`   | The codec used for encoding for audio in [`media`](#media) messages, the value is always set to `audio/x-mulaw`                                                         |
 | `start.mediaFormat.sampleRate` | Sample rate for [audio](#media), configured by [`<Stream>` `sampleRate`](../twiml/stream.md#samplerate)                                                                 |
 | `start.mediaFormat.channels`   | The number of channels in the stream's [audio](#media), configured by [`<Stream>` `track`](../twiml/stream.md#track)                                                    |
 | `start.customParameters`       | The custom parameters as-is set by nesting in [`<Stream>`](../twiml/stream.md#sending-custom-parameters)                                                                |
@@ -87,7 +104,7 @@ It is sent only once.
     "callSid": "CAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "tracks": [ "inbound" ],
     "mediaFormat": {
-        "encoding": "audio/L16",
+        "encoding": "audio/x-mulaw",
         "sampleRate": 8000,
         "channels": 1
     },

@@ -10,7 +10,7 @@ Stream can only be used for an _ongoing_ call.
 
 <!--
 TODO: improve this, add callflow stream doc and etc....
-Stream provided by Pivot is a bit different from the one provided by [Callflow Stream](https://gothub.com/2600hz/kazoo-callflow/doc/stream.md)
+Stream provided by Pivot is a bit different from the one provided by [Callflow Stream](https://docs.2600hz.com/git/2600hz/kazoo-callflow/doc/stream.md)
 or other ways available in 2600Hz.
 
 something like: The main difference is on the message type, and your application being able to send media to be played back on the call.
@@ -34,7 +34,7 @@ In a unidirectional stream, all WebSocket messages are sent in plaintext JSON, w
 audio itself encoded in Base64 included in [`media`](./websocket-messages.md#media-message) messages.
 
 Any detected inbound DTMF (when the caller presses a touch-tone number)
-are also be sent over the WebScoket in a [`dtmf`](./websocket-messages.md#dtmf-message) message.
+are also be sent over the WebSocket in a [`dtmf`](./websocket-messages.md#dtmf-message) message.
 
 Pivot starts a unidirectional stream when it encounters `<Start><Stream>` in a Pivot TwiML response.
 Once the stream starts, Pivot immediately continues to process the XML. If there are no remaining
@@ -128,6 +128,6 @@ call. The `<Say>` verb will never be executed by Pivot.
 
 - [\<Stream> Pivot TwiML Reference](../twiml/stream.md)
 - [Pivot Stream WebSocket Messages Reference](./websocket-messages.md)
-<!-- - [Callflow Stream](http://github.com/2600hz/kazoo-callflow/doc/stream.md), alternative way to start a stream using onlt Callflow -->
-- [Metaflow Stream Actions](http://github.com/2600hz/kazoo-konami-pro/doc/stream.md) allows you to control a stream via Channels API or Metaflow
+<!-- - [Callflow Stream](http://docs.2600hz.com/git/2600hz/kazoo-callflow/doc/stream.md), alternative way to start a stream using onlt Callflow -->
+<!-- - [Metaflow Stream Actions](http://docs.2600hz.com/git/2600hz/kazoo-konami-pro/doc/stream.md) allows you to control a stream via Channels API or Metaflow -->
 <!-- link to a example websocket application on how to use pivot stream -->

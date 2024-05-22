@@ -1,10 +1,10 @@
-# Bridging
+# Bridging Calls with Callflow JSON
 
-Kazoo JSON offers a plethora of ways to call out to various endpoints! Below are some minimalist examples to whet your appetite. Most take more options, are nestable as children of other callflow actions, and are generally quite useful in accomplishing most peoples' needs.
+Callflow JSON offers a plethora of ways to call out to various endpoints! Below are some minimalist examples to whet your appetite. Most take more options, are nestable as children of other callflow actions, and are generally quite useful in accomplishing most peoples' needs.
 
 ## Devices
 
-Dial a single Kazoo device
+Dial a single {% BRAND_NAME %} device
 
 ```json
 {
@@ -15,7 +15,7 @@ Dial a single Kazoo device
 
 ## Users
 
-Dial a Kazoo user (any devices owned by the user)
+Dial a {% BRAND_NAME %} user (any devices owned by the user)
 
 ```json
 {
@@ -28,7 +28,7 @@ Dial a Kazoo user (any devices owned by the user)
 
 ## Ring Group
 
-Ring groups are ultra-flexible in what types of endpoints you can combine: devices, users, or groups! You need only include the IDs you want to ring and Kazoo will build the appropriate list of endpoints.
+Ring groups are ultra-flexible in what types of endpoints you can combine: devices, users, or groups! You need only include the IDs you want to ring and {% BRAND_NAME %} will build the appropriate list of endpoints.
 
 ```json
 {
@@ -49,9 +49,9 @@ You are free to mix/match devices, users, and groups based on the needs of this 
 
 ## Dialing outside the account
 
-It is all well and good that dialing to known Kazoo endpoints is so easy, but what about contacting the outside world?
+It is all well and good that dialing to known {% BRAND_NAME %} endpoints is so easy, but what about contacting the outside world?
 
-Kazoo supports two types of resources, global and per-account (or local, as Kazoo refers to them). You can optionally route to either, depending on how you've configured your account and whether you utilize the Kazoo cluster's global resources.
+{% BRAND_NAME %} supports two types of resources, global and per-account (or local, as {% BRAND_NAME %} refers to them). You can optionally route to either, depending on how you've configured your account and whether you utilize the {% BRAND_NAME %} cluster's global resources.
 
 The only real difference is the `use_local_resources` flag.
 

@@ -8,7 +8,6 @@ Stream an active call's audio from Pivot to your server through WebSockets in re
 `<Stream>` let you access the raw audio of a call, for further processing by your application.
 The Audio is encoded in `audio/L16` (commonly known as 16 bit linear PCM) by default.
 
-
 See [Stream Call Media](../stream-call-media/overview.md) to learn more about Pivot's messages
 through the WebSocket. This page is reference for the `<Stream>` term.
 
@@ -70,10 +69,21 @@ the call is hangup, or your WebSocket server disconnects.
 
 `<Start><Stream>` noun has the following attributes:
 
+<!-- uncomment and remove other table after RELEASE-334 -->
+<!-- | Name                          | Values Description                                                                                         | Default value            | -->
+<!-- |-------------------------------|------------------------------------------------------------------------------------------------------------|--------------------------| -->
+<!-- | [`url`](#url)                 | Optional, a relative, or absolute URL to stream the audio to                                               | Pivot TwiML document URL | -->
+<!-- | [`audioCodec`](#audiocodec)   | Specifies the audio encoding of the stream. Optional.                                                      | `pcm`                    | -->
+<!-- | [`audioMix`](#audiomix)       | Specifies the audio channel of the stream. Optional.                                                       | `mono`                   | -->
+<!-- | [`id`](#id)                   | Only used with `<Stop><Stream>`, identifies the attached stream to stop by its unique stream ID. Optional. | none                     | -->
+<!-- | [`name`](#name)               | Your custom unique friendly name to identify the stream. Optional.                                         | Randomly generated       | -->
+<!-- | [`rawAudio`](#rawaudio)       | Specifies to send the raw audio instead of encoded as Base64 in a JSON format. Optional.                   | `false`                  | -->
+<!-- | [`sampleRate`](#samplerate)   | Specifies the audio sample rate of the stream. Optional.                                                   | `8000`                   | -->
+<!-- | [`track`](#track)             | Specifies what side of the call's audio to stream. Optional.                                               | `inbound_track`          | -->
+
 | Name                          | Values Description                                                                                         | Default value            |
 |-------------------------------|------------------------------------------------------------------------------------------------------------|--------------------------|
 | [`url`](#url)                 | Optional, a relative, or absolute URL to stream the audio to                                               | Pivot TwiML document URL |
-| [`audioCodec`](#audiocodec) | Specifies the audio encoding of the stream. Optional.                                                      | `pcm`                    |
 | [`audioMix`](#audiomix)       | Specifies the audio channel of the stream. Optional.                                                       | `mono`                   |
 | [`id`](#id)                   | Only used with `<Stop><Stream>`, identifies the attached stream to stop by its unique stream ID. Optional. | none                     |
 | [`name`](#name)               | Your custom unique friendly name to identify the stream. Optional.                                         | Randomly generated       |
@@ -91,6 +101,7 @@ If relative or missing, a secure WebSocket URL (`wss`) will be assumed. We highl
 
 Any string query and fragment will discarded from the URL. See [Sending Custom Parameters](#sending-custom-parameters) on how to include extra custom parameters instead.
 
+<!-- uncomment after RELEASE-334
 ### `audioCodec`
 
 Specifies the audio codec you want to get in the stream. Default values is `pcm`.
@@ -112,6 +123,7 @@ Possible `audioCodec` values are:
   and sets `sampleRate` to `8000` and `audioMix` to `mono`. Any `sampleRate` and
   `audioMix` attributes will be ignored.
 - `pcmu`: Same as `g711_ulaw`
+-->
 
 ### `audioMix`
 

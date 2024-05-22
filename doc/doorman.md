@@ -6,6 +6,7 @@
 In the following API commands and PHP scripts, there are placeholder values to be filled in as appropriate. We will define those here:
 
 | Placeholder         | Description                                                           |
+|---------------------|-----------------------------------------------------------------------|
 | `$AUTH_TOKEN`       | The KAZOO authentication JWT for API calls                            |
 | `$API_URL`          | The KAZOO API URL - `https://sandbox.2600hz.com:8443/v2` for instance |
 | `$AUTH_USER_NAME`   | The KAZOO username for logging in via API                             |
@@ -161,7 +162,7 @@ header('content-type: application/json');
 {'status':'success'}
 ```
 
-1.  The recording POST will execute the `quickcall.php {CALL_ID} {RECORDING_ID} > /tmp/{RECORDING_ID}.txt` script in the background to initiate the call to the callee, put any output into the tmp file, and initiate a [quickcall](https://docs.2600hz.com/dev/applications/crossbar/doc/quickcall/) to the callee and the doorman callflow
+1.  The recording POST will execute the `quickcall.php {CALL_ID} {RECORDING_ID} > /tmp/{RECORDING_ID}.txt` script in the background to initiate the call to the callee, put any output into the tmp file, and initiate a [Quickcall](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/doc/quickcall.md) to the callee and the doorman callflow
 
 ```php
 <?php
@@ -283,7 +284,7 @@ header("content-type: application/json");
 }
 ```
 
-1.  After the prompts/recording play and the callee selects a menu option, a Pivot request to callee\_menu.php will handle the selection. If voicemail or hangup are chosen, an API request to run the [metaflow](https://docs.2600hz.com/dev/applications/crossbar/doc/channels/#put-a-feature-metaflow-on-a-channel) against the caller's leg is sent before returning a hangup to the callee.
+1.  After the prompts/recording play and the callee selects a menu option, a Pivot request to callee\_menu.php will handle the selection. If voicemail or hangup are chosen, an API request to run the [MetaFlow](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/channels.md#put-a-feature-metaflow-on-a-channel) against the caller's leg is sent before returning a hangup to the callee.
 
 ```php
 <?php
