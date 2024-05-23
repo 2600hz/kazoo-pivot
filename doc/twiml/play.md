@@ -15,7 +15,7 @@
 | [`terminators`](#terminators) | | |
 
 
-### Loop
+### `loop`
 
 Specifies how may times the audio file to be played to the user. By default the audio will
 play once. A value of `0` will plays the audio file indefinitly until either the caller

@@ -10,11 +10,27 @@
 
 | Name | Values Description | Default value |
 |------|--------------------|---------------|
-| `action` | | |
-| `timeout` | | |
-| `finishOnKey` | | |
-| `method` | | |
-| `numDigits` | | |
+| [`action`](#action)| | |
+| [`finishOnKey`](#finishOnKey)| | |
+| [`method`](#method)| | |
+| [`numDigits`](#numDigits)| | |
+| [`timeout`](#timeout)| | |
+
+
+### `action`
+@TODO
+
+### `finishOnKey`
+@TODO
+
+### `method`
+@TODO
+
+### `numDigits`
+@TODO
+
+### `timeout`
+@TODO
 
 ## Nesting Nouns
 

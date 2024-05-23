@@ -2,6 +2,8 @@
 
 @TODO description
 
+@TODO instead of URL in content, people can set multiple `<Variable>` to set on the call.
+
 ## Attributes
 
 | Name | Values Description | Default value |
@@ -10,13 +12,11 @@
 
 @TODO method and url will be use for subsequent new pivot request to the application
 
-@TODO comfirm these
+@TODO We can add this so people can both use url and Variable these
 | [`url`](#url) | | |
-| [`method`](#method) | | |
-
-@TODO instead of URL in content, you can set multiple `<Variable>` to set on the call.
 
 ### `method`
+@TODO
 
 ## Nesting
 

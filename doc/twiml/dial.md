@@ -10,18 +10,36 @@
 
 | Name | Values Description | Default value |
 |------|--------------------|---------------|
-| `hangupOnStar` | | |
-| `timeout` | | |
-| `timeLimit` | | |
-| `action` | | |
-| `callerId` | | |
-| `method` | | |
+| [`action`](#action)| | |
+| [`callerId`](#callerId)| | |
+| [`hangupOnStar`](#hangupOnStar)| | |
+| [`method`](#method)| | |
+| [`timeLimit`](#timeLimit)| | |
+| [`timeout`](#timeout)| | |
 
 @TODO verify these:
-| `record` | | |
-| `hangupOn` | | |
-| `collect_dtmf` | | |
-| `continueOnFail` | | |
+| [`collect_dtmf`](#collect_dtmf)| | |
+| [`continueOnFail`](#continueOnFail)| | |
+| [`hangupOn`](#hangupOn)| | |
+| [`record`](#record)| | |
+
+### `action`
+@TODO
+
+### `callerId`
+@TODO
+
+### `hangupOnStar`
+@TODO
+
+### `method`
+@TODO
+
+### `timeLimit`
+@TODO
+
+### `timeout`
+@TODO
 
 ## Nesting Nouns
 
@@ -30,10 +48,10 @@
 | Noun         | Description                                                        |
 | ------------ | ------------------------------------------------------------------ |
 | plain text | simple dial, will format text as DID will make and offnet call |
-| [`<Number>`](./dial/number.md)     | DID with extended attributes, @TODO: will create endpoint and acts like call forward |
 | [`<Conference>`](./dial/conference.md) | Conference room endpoint                                |
-| [`<User>`](./dial/user.md)       | ID of an existing Kazoo User (works like the User callflow element |
 | [`<Device>`](./dial/device.md)     | ID of an existing Kazoo Device                                     |
+| [`<Number>`](./dial/number.md)     | DID with extended attributes, @TODO: will create endpoint and acts like call forward |
 | [`<Sip>`](./dial/sip.md)        | SIP URI to dial                                                    |
+| [`<User>`](./dial/user.md)       | ID of an existing Kazoo User (works like the User callflow element |
 
 ## Examples
