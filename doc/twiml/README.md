@@ -38,16 +38,16 @@ of verbs or nouns after them to be not reachable, such as `<Hangup>`.
 
 @TODO some fancy desciption or filler
 
-| Verb     | Description                                              | Nestable Verbs and Nouns                                          |
-| -------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
-| `<Dial>`   | Connect the caller to other endpoints                    | plain text DID, `<Conference>`, `<Queue>`, `<Number>`, `<User>`, `<Device>` |
-| `<Record>` | Record the caller                                        |                                                                   |
-| `<Gather>` | Collect DTMFs from the caller                            | `<Play>`, `<Say>`                                                     |
-| `<Play>`   | Play a media file (mp3, wav) to the caller               |                                                                   |
-| `<Say>`      | Use a TTS engine to say the supplied text                |                                                                   |
-| `<Redirect>` | Like an HTTP Redirect, make another HTTP request         | `<Variable>`                                                        |
-| `<Pause>`    | Pause callflow execution for supplied number of seconds  |                                                                   |
-| `<Hangup>`   | Hangup the caller                                        |                                                                   |
-| `<Reject>`   | Reject (and don't answer - won't start billing) the call |                                                                   |
-| `<Set>` | Key value pair(s) to store along-side the call| |
+| Verb         | Description                                              | Nestable Verbs and Nouns                                                    |
+|--------------|----------------------------------------------------------|-----------------------------------------------------------------------------|
+| [`<Dial>`](./dial.md)     | Connect the caller to other endpoints                    | plain text DID, `<Conference>`, `<Queue>`, `<Number>`, `<User>`, `<Device>` |
+| [`<Record>`](./record.md)   | Record the caller                                        |                                                                             |
+| [`<Gather>`](./gather.md)   | Collect DTMFs from the caller                            | `<Play>`, `<Say>`                                                           |
+| [`<Play>`](./play.md)     | Play a media file (mp3, wav) to the caller               |                                                                             |
+| [`<Say>`](./say.md)      | Use a TTS engine to say the supplied text                |                                                                             |
+| [`<Redirect>`](./redirect.md) | Like an HTTP Redirect, make another HTTP request         | `<Variable>`                                                                |
+| [`<Pause>`](./pause.md)    | Pause callflow execution for supplied number of seconds  |                                                                             |
+| [`<Hangup>`](./hangup.md)   | Hangup the caller                                        |                                                                             |
+| [`<Reject>`](./reject.md)   | Reject (and don't answer - won't start billing) the call |                                                                             |
+| [`<Set>`](./set.md)      | Key value pair(s) to store along-side the call           |                                                                             |
 
