@@ -703,7 +703,7 @@ req_content_type(<<"form">>) ->
 req_content_type(<<"json">>) ->
     "application/json".
 
--spec is_first_pivot_request(kz_json:object()) -> boolean().
+-spec is_first_pivot_request(kapps_call:call()) -> boolean().
 is_first_pivot_request(Call) ->
     1 == kzt_util:iteration(Call).
 
@@ -714,8 +714,7 @@ publish_failed_or_hangup(Call, RequesterQ) ->
         'false' -> maybe_hangup(Call)
     end.
 
--spec maybe_hangup(kapps_call:call() | undefined) -> 'ok'.
-maybe_hangup('undefined') -> 'ok';
+-spec maybe_hangup(kapps_call:call()) -> 'ok'.
 maybe_hangup(Call) -> kapps_call_command:hangup(Call).
 
 -spec publish_failed(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
