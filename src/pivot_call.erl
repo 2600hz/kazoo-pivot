@@ -733,5 +733,5 @@ publish_failed(Call, RequesterQ) ->
 stop_call_after(Srv, Call) ->
     timer:apply_after(?MILLISECONDS_IN_SECOND div 100
                      ,?MODULE
-                     ,stop_call
+                     ,'stop_call'
                      ,[Srv, Call]).
