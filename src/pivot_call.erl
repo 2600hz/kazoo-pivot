@@ -91,7 +91,7 @@ start_link(Call, JObj) ->
                            ).
 
 -spec stop_call(pid(), kapps_call:call()) -> 'ok'.
-stop_call(Srv, Call) -> gen_listener:cast(Srv, {'stop', Call}).
+stop_call(Srv, Call) -> gen_listener:cast(Srv, {'stop_call', Call}).
 
 -spec stop_with_response(pid(), kapps_call:call()) -> 'ok'.
 stop_with_response(Srv, Call) ->
@@ -107,7 +107,7 @@ new_request(Srv, Uri, Method, Params) ->
     gen_listener:cast(Srv, {'request', Uri, Method, Params}).
 
 -spec updated_call(pid(), kapps_call:call()) -> 'ok'.
-updated_call(Srv, Call) -> gen_listener:cast(Srv, {'updated_call', Call}).
+updated_call(Srv, Call) -> gen_listener:call(Srv, {'updated_call', Call}).
 
 -spec usurp_executor(pid()) -> 'ok'.
 usurp_executor(Srv) -> gen_listener:cast(Srv, 'usurp').
@@ -193,6 +193,8 @@ format_request_header(Key, Value, Acc) ->
 %% @end
 %%------------------------------------------------------------------------------
 -spec handle_call(any(), kz_term:pid_ref(), state()) -> {'reply', 'ok', state()}.
+handle_call({'updated_call', Call}, _From, State) ->
+    {'reply', 'ok', State#state{call=Call}};
 handle_call(_Request, _From, State) ->
     {'reply', 'ok', State}.
 
@@ -231,12 +233,9 @@ handle_cast({'request', Uri, Method, Params}
                         }
             };
         _ ->
-            publish_failed(Call, RequesterQ),
+            publish_failed_or_hangup(Call, RequesterQ),
             {'stop', 'normal', State}
     end;
-
-handle_cast({'updated_call', Call}, State) ->
-    {'noreply', State#state{call=Call}};
 
 handle_cast({'gen_listener', {'created_queue', Q}}
            ,#state{call=Call
@@ -251,12 +250,20 @@ handle_cast({'gen_listener', {'created_queue', Q}}
     new_request(self(), VoiceUri, Method, BaseParams),
     {'noreply', State#state{call=kapps_call:set_controller_queue(Q, Call)}};
 
-handle_cast({'stop', Call}
+handle_cast({'stop_call', Call}
            ,#state{cdr_uri='undefined'}=State
            ) ->
     lager:debug("no cdr callback, terminating call"),
     kapps_call_command:hangup(Call),
     {'stop', 'normal', State};
+
+handle_cast({'stop_call', Call}, #state{}=State) ->
+    lager:debug("requested to stop while CDR uri is defined, hanging call waiting for cdrs before going down, hard stopping in 30 seconds"),
+    kapps_call_command:hangup(Call),
+
+    %% hard stop if hangup or cdr was unsuccessful.
+    erlang:send_after(30 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
+    {'noreply', State};
 
 handle_cast({'cdr', _JObj}
            ,#state{cdr_uri='undefined'
@@ -264,7 +271,7 @@ handle_cast({'cdr', _JObj}
                   }=State
            ) ->
     lager:debug("recv cdr for call, no cdr uri though"),
-    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'stop', Call}),
+    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
     {'noreply', State};
 handle_cast({'cdr', JObj}
            ,#state{cdr_uri=Url
@@ -286,8 +293,8 @@ handle_cast({'cdr', JObj}
             lager:debug("failed to send CDR: ~p", [_E])
     end,
 
-    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'stop', Call}),
-    {'noreply', State};
+    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
+    {'noreply', State#state{cdr_uri='undefined'}};
 
 handle_cast({'add_event_handler', {Pid, _Ref}}
            ,#state{response_event_handlers=Pids}=State
@@ -320,7 +327,7 @@ handle_cast(_Req, State) ->
 %%------------------------------------------------------------------------------
 -spec handle_info(any(), state()) -> {'noreply', state()} |
           {'stop', any(), state()}.
-handle_info({'stop', _Call}, State) ->
+handle_info({'hard_stop', _Call}, State) ->
     {'stop', 'normal', State};
 handle_info({'http', {ReqId, 'stream_start', Hdrs}}
            ,#state{request_id=ReqId}=State
@@ -337,7 +344,7 @@ handle_info({'http', {ReqId, {'error', Error}}}
                   }=State
            ) ->
     lager:info("recv error ~p : collected: ~s", [Error, lists:reverse(_RespBody)]),
-    publish_failed(Call, RequesterQ),
+    publish_failed_or_hangup(Call, RequesterQ),
     {'stop', 'normal', State};
 
 handle_info({'http', {ReqId, 'stream', Chunk}}
@@ -390,7 +397,7 @@ handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
            )
   when (StatusCode - 400) < 100 ->
     lager:info("recv client failure status code ~p", [StatusCode]),
-    publish_failed(Call, RequesterQ),
+    publish_failed_or_hangup(Call, RequesterQ),
     maybe_debug_resp(ShouldDebug, Call, kz_term:to_binary(StatusCode), RespHeaders, RespBody),
     {'stop', 'normal', State};
 handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
@@ -402,7 +409,7 @@ handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, RespBody}}}
            )
   when (StatusCode - 500) < 100 ->
     lager:info("recv server failure status code ~p", [StatusCode]),
-    publish_failed(Call, RequesterQ),
+    publish_failed_or_hangup(Call, RequesterQ),
     maybe_debug_resp(ShouldDebug, Call, kz_term:to_binary(StatusCode), RespHeaders, RespBody),
     {'stop', 'normal', State};
 
@@ -412,7 +419,7 @@ handle_info({'DOWN', Ref, 'process', Pid, 'normal'}
                   }=State
            ) ->
     lager:debug("response processing finished for ~p(~p)", [Pid, Ref]),
-    {'noreply', State#state{response_pid='undefined'}, 'hibernate'};
+    {'noreply', State#state{response_pid='undefined', response_ref = 'undefined'}, 'hibernate'};
 handle_info({'DOWN', Ref, 'process', Pid, Reason}
            ,#state{response_pid=Pid
                   ,response_ref=Ref
@@ -421,8 +428,8 @@ handle_info({'DOWN', Ref, 'process', Pid, Reason}
                   }=State
            ) ->
     lager:info("response pid ~p(~p) down: ~p", [Pid, Ref, Reason]),
-    publish_failed(Call, RequesterQ),
-    {'stop', 'normal', State};
+    publish_failed_or_hangup(Call, RequesterQ),
+    {'stop', 'normal', State#state{response_pid = 'undefined', response_ref = 'undefined'}};
 handle_info(_Info, State) ->
     lager:debug("unhandled message: ~p", [_Info]),
     {'noreply', State}.
@@ -449,11 +456,17 @@ handle_event(_JObj, #state{response_pid=Pid
 %% @end
 %%------------------------------------------------------------------------------
 -spec terminate(any(), state()) -> 'ok'.
-terminate(_Reason, #state{response_pid=Pid}) when is_pid(Pid) ->
-    exit(Pid, 'kill'),
-    lager:info("pivot call terminating: ~p", [_Reason]);
-terminate(_Reason, #state{}) ->
-    lager:info("pivot call terminating: ~p", [_Reason]).
+terminate(_Reason, #state{response_pid=Pid}) ->
+    lager:info("pivot call terminating: ~p", [_Reason]),
+    _ = case is_pid(Pid)
+            andalso erlang:is_process_alive(Pid)
+        of
+            'true' ->
+                lager:debug("exiting response process ~p", [Pid]),
+                exit(Pid, 'kill');
+            'false' -> 'ok'
+        end,
+    'ok'.
 
 %%------------------------------------------------------------------------------
 %% @doc Convert process state when code is changed.
@@ -517,7 +530,7 @@ send(Call, Uri, Method, ReqHdrs, ReqBody, TimeoutMs, Debug) ->
 normalize_resp_headers(Headers) ->
     [{kz_term:to_lower_binary(K), kz_term:to_binary(V)} || {K, V} <- Headers].
 
--spec handle_resp(kz_term:api_binary(), kapps_call:call(), kz_term:ne_binary(), binary(), pid()) -> 'ok'.
+-spec handle_resp(kz_term:api_binary(), kapps_call:call(), kz_term:api_ne_binary(), binary(), pid()) -> 'ok'.
 handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
     _ = kz_amqp_channel:consumer_pid(AMQPConsumer),
 
@@ -525,10 +538,12 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
     Srv = kzt_util:get_amqp_listener(Call),
 
     case process_resp(RequesterQ, Call, CT, RespBody) of
-        {'stop_with_response', Call1} -> stop_with_response(Srv, Call1);
-        {'stop', Call1} -> stop_call(Srv, Call1);
-        {'ok', Call1} -> stop_call(Srv, Call1);
-        {'usurp', _Call1} -> usurp_executor(Srv);
+        {'stop_call', Call1} ->
+            stop_call_after(Srv, Call1);
+        {'stop_with_response', Call1} ->
+            stop_with_response(Srv, Call1);
+        {'usurp', _Call1} ->
+            usurp_executor(Srv);
         {'request', Call1} ->
             updated_call(Srv, kzt_util:increment_iteration(Call1)),
             new_request(Srv
@@ -537,63 +552,47 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
                        )
     end.
 
--spec process_resp(kz_term:api_binary(), kapps_call:call(), list() | binary(), binary()) ->
-          {'stop', kapps_call:call()} |
+-spec process_resp(kz_term:api_binary(), kapps_call:call(), kz_term:api_ne_binary(), binary()) ->
+          {'stop_call', kapps_call:call()} |
           {'stop_with_response', kapps_call:call()} |
-          {'ok', kapps_call:call()} |
           {'request', kapps_call:call()} |
           {'usurp', kapps_call:call()}.
 process_resp(_, Call, _, <<>>) ->
     lager:debug("no response body, finishing up"),
-    {'stop', Call};
-process_resp(RequesterQ, Call, Hdrs, RespBody) when is_list(Hdrs) ->
-    handle_resp(RequesterQ, Call, props:get_value(<<"content-type">>, Hdrs), RespBody, kz_amqp_channel:consumer_pid());
+    {'stop_call', Call};
 process_resp(RequesterQ, Call, CT, RespBody) ->
     lager:info("finding translator for content type ~s", [CT]),
     try kzt_translator:exec(RequesterQ, Call, CT, RespBody) of
-        {'stop', _Call1}=Stop ->
+        {'stop', Call1} ->
             lager:debug("translator says stop"),
-            Stop;
+            {'stop_call', Call1};
         {'stop_with_response', _Call1}=Stop ->
-            lager:debug("translator says stop because of rejecting call"),
+            lager:debug("translator says stop because it already hungup the call"),
             Stop;
-        {'ok', _Call1}=OK ->
-            lager:debug("translator says ok, continuing"),
-            OK;
+        {'ok', Call1} ->
+            lager:debug("translator rendered successfully, stopping pivot call"),
+            {'stop_call', Call1};
         {'request', _Call1}=Req ->
             lager:debug("translator says make another request"),
             Req;
-        {'usurp', _Call1}=U ->
+        {'usurp', _Call1}=Usurp ->
             lager:info("translator has been usurped"),
-            U;
+            Usurp;
         {'error', Call1} ->
             lager:debug("error in translator, FAIL"),
-            {'stop', Call1};
+            {'stop_call', Call1};
         {'error', Call1, Errors} ->
             lager:error("validation errors in response, FAIL"),
             _ = debug_error(Call1, Errors, RespBody),
-            {'stop', Call1}
+            {'stop_call', Call1}
     catch
         'throw':{'json', Msg, Before, After} ->
             debug_json_error(Call, Msg, Before, After, RespBody),
-            {'stop', Call};
-        'throw':{'error', 'no_translators', _CT} ->
-            lager:info("unknown content type ~s, no translators", [_CT]),
-            {'stop', Call};
+            {'stop_call', Call};
         'throw':{'error', 'unrecognized_cmds'} ->
             lager:info("no translators recognize the supplied commands: ~s", [RespBody]),
-            publish_failed(Call, RequesterQ),
-            {'stop', Call}
+            {'stop_call', Call}
     end.
-
--spec publish_failed(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
-publish_failed(Call, RequesterQ) ->
-    PubFun = fun(P) -> kapi_pivot:publish_failed(RequesterQ, P) end,
-    kz_amqp_worker:cast([{<<"Call-ID">>, kapps_call:call_id(Call)}
-                        | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
-                        ]
-                       ,PubFun
-                       ).
 
 -spec uri(kz_term:ne_binary(), iolist()) -> kz_term:ne_binary().
 uri(URI, QueryString) ->
@@ -703,3 +702,36 @@ req_content_type(<<"form">>) ->
     "application/x-www-form-urlencoded";
 req_content_type(<<"json">>) ->
     "application/json".
+
+-spec is_first_pivot_request(kapps_call:call()) -> boolean().
+is_first_pivot_request(Call) ->
+    1 == kzt_util:iteration(Call).
+
+-spec publish_failed_or_hangup(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
+publish_failed_or_hangup(Call, RequesterQ) ->
+    case is_first_pivot_request(Call) of
+        'true' -> publish_failed(Call, RequesterQ);
+        'false' -> maybe_hangup(Call)
+    end.
+
+-spec maybe_hangup(kapps_call:call()) -> 'ok'.
+maybe_hangup(Call) -> kapps_call_command:hangup(Call).
+
+-spec publish_failed(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
+publish_failed(Call, RequesterQ) ->
+    PubFun = fun(P) -> kapi_pivot:publish_failed(RequesterQ, P) end,
+    kz_amqp_worker:cast([{<<"Call-ID">>, kapps_call:call_id(Call)}
+                        | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
+                        ]
+                       ,PubFun
+                       ).
+
+%% after 10ms, send stop_call to pivot_call process,
+%% to avoid race condition between stop_call and DOWN message
+%% of handle_resp process when it's done its task
+-spec stop_call_after(kz_term:pid(), kapps_call:call()) -> {'ok', timer:tref()} | {'error', any()}.
+stop_call_after(Srv, Call) ->
+    timer:apply_after(?MILLISECONDS_IN_SECOND div 100
+                     ,?MODULE
+                     ,'stop_call'
+                     ,[Srv, Call]).
