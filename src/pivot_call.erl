@@ -15,6 +15,7 @@
 %% API
 -export([start_link/2
         ,maybe_relay_event/2
+        ,stop_pivot/2
         ,stop_call/2
         ,new_request/3, new_request/4
         ,updated_call/2
@@ -93,10 +94,8 @@ start_link(Call, JObj) ->
 -spec stop_call(pid(), kapps_call:call()) -> 'ok'.
 stop_call(Srv, Call) -> gen_listener:cast(Srv, {'stop_call', Call}).
 
--spec stop_with_response(pid(), kapps_call:call()) -> 'ok'.
-stop_with_response(Srv, Call) ->
-    erlang:send_after(?MILLISECONDS_IN_SECOND div 100, Srv, {'stop', Call}),
-    'ok'.
+-spec stop_pivot(pid(), kapps_call:call()) -> 'ok'.
+stop_pivot(Srv, Call) -> gen_listener:cast(Srv, {'stop_pivot', Call}).
 
 -spec new_request(pid(), kz_term:ne_binary(), http_method()) -> 'ok'.
 new_request(Srv, Uri, Method) ->
@@ -204,6 +203,8 @@ handle_call(_Request, _From, State) ->
 %%------------------------------------------------------------------------------
 -spec handle_cast(any(), state()) -> {'noreply', state()} |
           {'stop', 'normal', state()}.
+handle_cast({'stop_pivot', _Call}, State) ->
+    {'stop', 'normal', State};
 handle_cast('usurp', State) ->
     lager:debug("terminating pivot call because of usurp"),
     {'stop', 'normal', State#state{call='undefined'}};
@@ -538,10 +539,10 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
     Srv = kzt_util:get_amqp_listener(Call),
 
     case process_resp(RequesterQ, Call, CT, RespBody) of
+        {'stop', Call1} ->
+            stop_pivot_after(Srv, Call1);
         {'stop_call', Call1} ->
             stop_call_after(Srv, Call1);
-        {'stop_with_response', Call1} ->
-            stop_with_response(Srv, Call1);
         {'usurp', _Call1} ->
             usurp_executor(Srv);
         {'request', Call1} ->
@@ -553,8 +554,8 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
     end.
 
 -spec process_resp(kz_term:api_binary(), kapps_call:call(), kz_term:api_ne_binary(), binary()) ->
+          {'stop', kapps_call:call()} |
           {'stop_call', kapps_call:call()} |
-          {'stop_with_response', kapps_call:call()} |
           {'request', kapps_call:call()} |
           {'usurp', kapps_call:call()}.
 process_resp(_, Call, _, <<>>) ->
@@ -563,12 +564,12 @@ process_resp(_, Call, _, <<>>) ->
 process_resp(RequesterQ, Call, CT, RespBody) ->
     lager:info("finding translator for content type ~s", [CT]),
     try kzt_translator:exec(RequesterQ, Call, CT, RespBody) of
-        {'stop', Call1} ->
+        {'stop', _Call1}=Stop ->
             lager:debug("translator says stop"),
-            {'stop_call', Call1};
-        {'stop_with_response', _Call1}=Stop ->
-            lager:debug("translator says stop because it already hungup the call"),
             Stop;
+        {'stop_call', _Call1}=StopCall ->
+            lager:debug("translator says stop and then hangup the call"),
+            StopCall;
         {'ok', Call1} ->
             lager:debug("translator rendered successfully, stopping pivot call"),
             {'stop_call', Call1};
@@ -734,4 +735,11 @@ stop_call_after(Srv, Call) ->
     timer:apply_after(?MILLISECONDS_IN_SECOND div 100
                      ,?MODULE
                      ,'stop_call'
+                     ,[Srv, Call]).
+
+-spec stop_pivot_after(kz_term:pid(), kapps_call:call()) -> {'ok', timer:tref()} | {'error', any()}.
+stop_pivot_after(Srv, Call) ->
+    timer:apply_after(?MILLISECONDS_IN_SECOND div 100
+                     ,?MODULE
+                     ,'stop_pivot'
                      ,[Srv, Call]).
