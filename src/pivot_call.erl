@@ -255,12 +255,12 @@ handle_cast({'stop_call', Call}
            ,#state{cdr_uri='undefined'}=State
            ) ->
     lager:debug("no cdr callback, terminating call"),
-    kapps_call_command:hangup(Call),
+    kapps_call_command:queued_hangup(Call),
     {'stop', 'normal', State};
 
 handle_cast({'stop_call', Call}, #state{}=State) ->
     lager:debug("requested to stop while CDR uri is defined, hanging call waiting for cdrs before going down, hard stopping in 30 seconds"),
-    kapps_call_command:hangup(Call),
+    kapps_call_command:queued_hangup(Call),
 
     %% hard stop if hangup or cdr was unsuccessful.
     erlang:send_after(30 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
