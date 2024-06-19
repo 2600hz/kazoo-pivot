@@ -58,6 +58,7 @@
                ,response_ref :: kz_term:api_reference() %% monitor ref for the pid
                ,debug = 'false' :: boolean()
                ,requester_queue :: kz_term:api_ne_binary()
+               ,has_dial_action = 'false' :: boolean()
                }).
 
 -type state() :: #state{}.
@@ -129,7 +130,7 @@ maybe_relay_event(JObj, Props) ->
 handle_call_event(JObj, Props) ->
     case kz_api:event_type(JObj) of
         {<<"call_event">>, <<"CHANNEL_DESTROY">>} ->
-            lager:debug("channel destroyed, saving cdrs and hanging up..."),
+            lager:debug("channel destroyed, saving cdrs and maybe hanging up..."),
             Pid = props:get_value('server', Props),
             gen_listener:cast(Pid, {'cdr', JObj});
         {_Cat, _Evt} ->
@@ -268,10 +269,11 @@ handle_cast({'stop_call', Call}, #state{}=State) ->
 handle_cast({'cdr', _JObj}
            ,#state{cdr_uri='undefined'
                   ,call=Call
+                  ,has_dial_action=DialAction
                   }=State
            ) ->
     lager:debug("recv cdr for call, no cdr uri though"),
-    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
+    maybe_keep_call(DialAction, Call),
     {'noreply', State};
 handle_cast({'cdr', JObj}
            ,#state{cdr_uri=Url
@@ -430,6 +432,8 @@ handle_info({'DOWN', Ref, 'process', Pid, Reason}
     lager:info("response pid ~p(~p) down: ~p", [Pid, Ref, Reason]),
     publish_failed_or_hangup(Call, RequesterQ),
     {'stop', 'normal', State#state{response_pid = 'undefined', response_ref = 'undefined'}};
+handle_info('dial_action_exists', State) ->
+    {'noreply', State#state{has_dial_action = 'true'}};
 handle_info(_Info, State) ->
     lager:debug("unhandled message: ~p", [_Info]),
     {'noreply', State}.
@@ -707,6 +711,12 @@ req_content_type(<<"json">>) ->
 is_first_pivot_request(Call) ->
     1 == kzt_util:iteration(Call).
 
+-spec maybe_keep_call(term(), kapps_call:call()) -> 'ok'.
+maybe_keep_call('true', _Call) -> 'ok';
+maybe_keep_call('false', Call) ->
+    erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
+    'ok'.
+
 -spec publish_failed_or_hangup(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
 publish_failed_or_hangup(Call, RequesterQ) ->
     case is_first_pivot_request(Call) of
@@ -729,9 +739,10 @@ publish_failed(Call, RequesterQ) ->
 %% after 10ms, send stop_call to pivot_call process,
 %% to avoid race condition between stop_call and DOWN message
 %% of handle_resp process when it's done its task
--spec stop_call_after(kz_term:pid(), kapps_call:call()) -> {'ok', timer:tref()} | {'error', any()}.
+-spec stop_call_after(kz_term:pid(), kapps_call:call()) -> 'ok'.
 stop_call_after(Srv, Call) ->
-    timer:apply_after(?MILLISECONDS_IN_SECOND div 100
-                     ,?MODULE
-                     ,'stop_call'
-                     ,[Srv, Call]).
+    _ = timer:apply_after(?MILLISECONDS_IN_SECOND div 100
+                         ,?MODULE
+                         ,'stop_call'
+                         ,[Srv, Call]),
+    'ok'.
