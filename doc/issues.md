@@ -1,5 +1,5 @@
 
-* Default data submitted on request: CallerName, Direction, ApiVerson, CallStatus, To, From, AccountSid, CallSid
+* Default data submitted on request: CallerName, Direction, ApiVersion, CallStatus, To, From, AccountSid, CallSid
 * Play
   * Play audio from URL supplied as content of Play tag <Play>http://some.host.com/file/to/play.mp3</Play>
   * Support 'loop' attribute, to loop playing of the audio
