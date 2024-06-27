@@ -2,27 +2,23 @@
 
 ## Overview
 
-The Pivot gives developers greater control over callflows than what comes natively in Kazoo. Pivot attempts to corral the salient data and send it, via HTTP to the developer's web server.
-Pivot expects a response with appropriate TwiML XML or Kazoo Callflow JSON, and will execute the callflow returned on behalf of the developer.
+Pivot gives developers greater control over Callflows than what comes natively in Kazoo. Pivot attempts to gather relevant call data and then sends it, via HTTP to the developer's web server.
+Pivot expects a response with appropriate TwiML XML or Kazoo Callflow JSON, and will execute the callflow returned. The developer server can generate and reply with any callflow actions, so anything that can be done with callflows can be done dynamically with Pivot.
 
-Pivot works with an existing call and cannot iniate a call by itself.
+Pivot works with an existing call and cannot initiate a call by itself.
 
-Marvel at how easy that was.
 
 ## How Pivot works
 
-You start by creating a special Callfow in your account with `pivot` module. When some one calls the number assigned to that Callflow, callflow uses
-the configured URL of your application in the flow and ask Pivot application to take control of the call. Pivot application then sends a request to the URL
-to get the instruction of what to with the call.
+A Pivot action can be created in your account using the Pivot app, or using Advanced Callflow. When the assigned number is called, Pivot will make a request to the configured URL. The developer server can use the `request parametrs` pivot sends to control and interact with the call. 
 
-Your application can now uses the request paramters and Kazoo HTTP API to control and interact with the call. Like for example play a media, record the call or make an offnet call.
+The Pivot app creates a special Callflow with one module, `pivot`. When a call comes in, Callflows gives control of the call to Pivot, which makes an http request to the configured server, expecting a reply containing Callflow JSON or supported TwiML XML.
 
-You have control over how Pivot sends request to your applications and what your application can respond. @TODO: links?
+You have control over how Pivot sends request to your applications and what your application can respond.
 
 ### Example Pivot workflow
 
-Starting with creating a progammable callflow, use Advanced Callflow UI app or Callflow HTTP API:
-
+Any programmable callflow can use the `pivot` module. This example will use the Advanced Callfow UI or the Callflow HTTP API instead of the Pivot App to create a pivot:
 ```json
 {
  "numbers": ["2030"],
@@ -38,10 +34,10 @@ Starting with creating a progammable callflow, use Advanced Callflow UI app or C
 }
 ```
 
-When someone calls `2030` extension progammable callflow will execute and asks Pivot application to take control of call.
-Pivot application sends a `GET` HTTP request to `http://your.pivot.server/path/to/script.php`.
+When someone calls the extension `2030`, this programmable callflow will execute and ask Kazoo Pivot, the backend Pivot application to take control of call.
+Kazoo Pivot then sends a `GET` HTTP request to `http://your.pivot.server/path/to/script.php`.
 
-Your application may respond in JSON or XML payload, for example here you application respond with a JSON to play a TTS text:
+Your application may respond with a JSON or XML payload, for example, this server  responds with Callflow JSON to play TTS:
 
 ```json
 {
@@ -52,114 +48,46 @@ Your application may respond in JSON or XML payload, for example here you applic
     "children": {}
 }
 ```
+Kazoo will then render this JSON, and the caller will hear "Pivot is pretty awesome. Have a great day." Kazoo will attempt to continue rendering the returned JSON. Because there are no additional `modules` in this callflow, the call will end.
 
-## Pivot make request to your application
+### Pivot Module Parameters
 
-You can create and control how to route an incoming call to your application for handling. You create a callflow and configue some paramters of request.
+Required and optional parameters for the callflow `pivot` module. The Pivot App creates an action using only `voice_url`, `method` and `req_format`
 
-When the Pivot callflow is triggered, Callflow sends the request to Pivot application. Pivot application take control of the call and tries to
-send request to your external application over HTTP for handling the call. Since this is a normal callflow, you may assign multiple DIDs or extensions or
-patterns to the callflow.
+| Key                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `voice_url`              | What URL to send the request when a call comes into this Pivot callflow. **This field is required.**<br><br> The URL is stricly check to be a valid HTTP or HTTPS URL and hostname if used must be resolvable through DNS. The URL must contain schema and hostname or IP and an optional port or user name password for basic authentication.<br><br> Please be note depends on system configuration `127.0.0.1/32`, `0.0.0.0/32` IPs and hostname `localhost` may by default blocked. System adminstrator may also blocked RFC1918 IPs `10.0.0.0/8`, `172.16.0.0/12`, and `192.168.0.0/16`.<br><br>Valid hostname looks like:<br><br>* `https?://[user@pass]client.host[:port]`<br><br>Required parameter, no default. |
+| `method`                 | What HTTP method to send the request(s) with. Possible values are:<br><br>* `get`<br>* `post`<br><br> Defaults to `get`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `req_format`             | Request parameter format Pivot will use. Valid options are:<br>* `kazoo`<br>* `twiml`<br><br> See [Request Parameters](requestParameters.md) section for more info. <br><br>Defaults to `kazoo`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `req_body_format`        | Format to encode the request body, including request parameters when using `POST`, valid options are<br><br>* `form`: request body will be encoded in `application/x-www-form-urlencoded` format as a query string<br>* `json`: request bdoy will be formatted in `application/json` <br><br>Defaults to `form`                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `debug`                  | Store debug logs of the requests and responses to your application. These logs are then available via the [Pivot API](/kazoo/5x-stable-api-ref/call-control/advanced-features/pivot/pivot#debugging-pivot-attempts)<br><br>Defaults to `false`                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `cdr_url`                | URL to send the CDR (Call Data Record) to at the end of the call. If used, CDRs for for the initial all and any additional calls connected during the pivot session will be sent to this URL at the end of the call.<br>The body is encoded in `application/x-www-form-urlencoded` format.<br>Note that Kazoo always stores CDRs accessible through the CDRs API. This parameter allows for the CDRs to additionally be sent to developer servers.<br><br>No Default                                                                                                                                                                                                                                                     |
+| `custom_request_headers` | Custom HTTP headers to include on each Pivot request to the `voice_url`. Kazoo expects these headers to conform to the HTTP protocol spec. For example, header names must be prefixed with `X-`<br>Used to pass additional data to developer servers.<br><br>No Default                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `req_timeout_ms`         | How long, in milliseconds, to wait for a Pivot response from the developer server. maximum value is 5 seconds. 2600Hz  highly recommends that your application respond to requests under 5 seconds to avoid call quality issues.<br><br>Defaults to `5000`                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+## Developer Server Response
 
-@TODO should we say calllfow may continue processing the original callflow if the http reqeust fails?
-@TODO we may want to advise something here but I forgot what
+Pivot expects a `200` response which includes a `Content-Type` header. Pivot uses the value of `Content-Type` to determine how to parse the response.
+If no `Content-Type` is set, `text/xml` will be assumed. Any unsupported `Content-Type` will result in failure. `Content-Type` can change with each request/response within one Pivot Session.
 
-Bare minimum required configuration is the URL of your application. Other parameters are optional. By default Pivot application will make
-a HTTP `GET` to the specified URL with all paramters passed as encoded string query.
+Please note that if the developer server decides not to handle a call, it is still responsible for sending a response to end the call. For quick no answer, the server can send `200 OK`, with `Content-Type: aplication/xml` and body `<Response />`.
 
-You application must respond in maximum of 5 seconds before the Pivot coniders the reuest is failed.
+If a request times out or otherwise fails, Pivot will end the call with [one exception](#Edge Cases).
+### Supported Callflow Formats
+Currently Pivot supports Kazoo JSON and TwiML XML responses from developer servers.
 
-You may optionally request to log debug infomration about the request Pivot is sending and the response it is getting and if the outcome of the call if there is any.
-You may use this log to inspect and debug your request and responses and know the possible reason why a certain call failed.
+#### Kazoo JSON
+[Kazoo JSON](./kazoo/README.md) is the Callflow JSON used throughout Kazoo. With this format the full power of Callflows is available, and actions behave exactly as they do in a normal callfow. Pivot uses this format when the `Content-Type` header of the developer server's response is `application/json`.
 
-### Pivot Callflow
+For more complete reference of available actions, see the [Callfow Actions Reference Manual]().
 
-@TODO add intro? description?
+#### TwiML XML
 
-| Key                      |  Description |
-| -------------------------| -------------|
-| `voice_url`              | What URL to send the request when a call comes into this Pivot callflow. **This field is required.**<br><br> The URL is stricly check to be a valid HTTP or HTTPS URL and hostname if used must be resolvable through DNS. The URL must contain schema and hostname or IP and an optional port or user name password for basic authentication.<br><br> Please be note depends on system configuration `127.0.0.1/32`, `0.0.0.0/32` IPs and hostname `localhost` may by default blocked. System adminstrator may also blocked RFC1918 IPs `10.0.0.0/8`, `172.16.0.0/12`, and `192.168.0.0/16`.<br><br>Valid hostname looks like:<br><br>* `https?://[user@pass]client.host[:port]` |
-| `method`                 | What HTTP method to send the request(s) with. Possible values are:<br><br>* `get`<br>* `post`<br><br> Default value is `get`. |
-| `req_format`             | What type of parameter Pivot must use when sending the request. Valid options are: <br><br>* `kazoo`<br>* `twiml`<br><br> See Request Parameters section for more info. Default value is `kazoo`. |
-| `req_body_format`        | What format should the request body have encoded in when using `POST` method. Valid options are:<br><br>* `form`: request body will be encoded in `application/x-www-form-urlencoded` format<br>* `json`: request budoy will be format in `application/json` <br><br> Default value is `form`. |
-| `debug`                  | Store debug logs of the requests and responses to your application. Default to `false`. These logs are then available via the [Pivot API](/kazoo/5x-stable-api-ref/call-control/advanced-features/pivot/pivot#debugging-pivot-attempts) |
-| `cdr_url`                | Optional URL to send the CDR to at the end of the call, useful to store and/or inspect Call Detail Record (CDR) after the call is ended. If used, CDRs for inital call and any outbound call started by `Dial` simple dial or `Numbers` noun ends a HTTP `POST` request will be sent to this URL. The body is encoded in `application/x-www-form-urlencoded` format.<br><br> By default no request to store CDRs is made. Please be advise Kazoo alwats store CDRs of each leg of the call, which can be retrived using CDRs API. |
-| `custom_request_headers` | Custom HTTP headers to be included on each Pivot request to the `voice_url`. Header names per HTTP protocol spec are prefix by `X-`. Header values can be anything that is allows as HTTP header value. You may useful this to pass additional data in HTTP header to your application. |
-| `req_timeout_ms`         | How long, in milliseconds, to wait for a Pivot response from the HTTP server. Default and maximum value is 5 seconds. We highly recommend that your application to respond to request uner 5 seconds to avoid call quality issues. |
+Pivot supports a subset of TwiML Verbs and Nouns for easier interoperability with and migration from Twilio. Some advanced Callflow actions may not be replicable using only TwiML support. Pivot uses this format when the `Content-Type` header of the developer server's response is `application/xml` or `text/xml`.
 
-### Request Parameters
-
-Pivot will include some data related to the received call in the request to your application to provide the data you can use to create the response.
-We advise your application t responde quicky as much as possible to avoid so much silence for the caller.
-
-What paramters are being sent and how they are encoded depends on your Pivot callflow configuration. By default Pivot sends Kazoo type parameters and will encode it as `application/x-www-form-urlencoded`.
-
-Depends on your application, you may choose the type and format of parameters you want to get. Kazoo supports to types:
-
-* [Kazoo Request Parameters](./kazoo/request_params.md): The standard parameters of calls used across the Kazoo.
-* [TwiML Request Parameters](./twiml/request_params.md): A variation of Kazoo calls data as subset of TwiML to help you onboard easy to Kazoo platform before fully integerating to Kazoo.
-
-### Create Pivot Callflow
-
-As said above the first step to use Progammable Callflow is to define a regular Callflow with `pivot` as module. You can use
-the usual way of creating Callflow, or you can use Pivot Monsterf UI or Commland apps to help you set up.
-
-@TODO:
-- maybe explain or show and example to create using API
-- show how to create using commland app or monster ui with screenshot?
-- do not over explain parameters here, refer to Pivot request to your application parameters section
-- if this section gets to big move it to a separate page so we can link it.
-
-
-## Your Application respond to Pivot
-
-After Pivot made the request to `voice_url`, your application can instruct how Kazoo to handle the received call.
-Maybe you want to recrod the call, or use TTS to say a text to the caller or play an audio
-file or any other actions you may want.
-
-You application must respond in maximum of 5 seconds before the Pivot coniders the reuest is failed.
-
-Pivot expect `200 OK` HTTP code with `Content-Type` header to indicate the translator to
-use for processing the response. If no `Content-Type` is set, `text/xml` will be assumed.
-Any not supported `Content-Type` will result in failure.
-
-Your application may choose to respond a Pivot any supported response translator that Pivot supports.
-Each response can use different translator independably.
-
-Please be advise if your application does not need to handle the call, you are still
-responsible to end the call with either translator. For quick no answer, your application
-can send `200 OK`, with `Content-Type: aplication/xml` and body `<Response />`.
-
-If HTTP request to your application fails in intial request or any other subsquent requests ails, Pivot will stop processing with failure.
-
-Pivot will stop with failure in making HTTP request or bad response or any
-failure in processing the the reponse (such as response validation failed), and Pivot will:
-
-- If the failure was for the inital request of Pivot Callflow, Pivot will send the failure
-  back to Callflow application to process the failed branch of the flow if there is any,
-  if no failed branch found the caller will be hangup.
-- For any subsquent requests after the inital request, Pivot will hangup the caller
-immediately.
-
-
-### Pivot Translator
-
-@TODO description
-
-
-#### Kazoo JSON Translator
-
-[Kazoo JSON JSON](./kazoo/README.md) is the same Callflow JSON that you already familiar with and are happey with. Using this translator you have the
-full power of Callflow at your hand and behave exactly like a normal Callflow will act.
-
-This gives you more power to control and dynamically create callflows per call basis.
-
-To use this translator set your application response `Content-Type` header to `application/json`.
-
-For more complete reference of available actions please see Callfow Actions Reference manual.
-
-#### TwiML Translator
-
-[TwiML](./twiml/README.md) is taylored more to epople that want easy migration to Kazoo from other platform. This is option gives a more restricted way to handle the call compare to Callflow.
-
-To sue thus please set Content-Type header to any of value: `application/xml`, `text/xml`
+## Edge Cases
+Edge cases developers and integrators may wish to be aware of.
+#### The first HTTP request to the developer server fails
+A `pivot` is almost always a terminal callflow action. However, if the initial pivot request fails, Kazoo will fallback and continue executing the programmable Callflow that created the pivot. 
+For pivot callflows created using the Pivot App, the callflow is otherwise empty, so Kazoo ends the call.
+#### Subsequent requests to the developer server fail
+Pivot can make more than one request to developer servers when pivot callflows contain TwIML `action` terms or additional `pivot` modules. If those fail, Pivot ends the call.
