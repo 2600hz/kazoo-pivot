@@ -1,7 +1,7 @@
 # TwiML Verb: `<Dial>`
 
 ## Overview
-<Dial> will connect an active call to another party. [Supported party types](#Nesting-Nouns)
+<Dial> will connect an active call to another [endpoint](applications/crossbar/doc/endpoints.md). [Supported party types](#Nesting-Nouns)
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -14,9 +14,9 @@ Pivot will attempt to dial the offnet number `555-459-0451`. Pivot will not exec
 
 If the original caller disconnects the call, Pivot will end the session and later terms in the document will not be executed.  
 
-Once this Pivot document is hosted, any spare number can be routed to use it through the Pivot App.
+Once this Pivot document is hosted, any spare number can be routed to use it through the Pivot App.  
 
-If you are using BYOC, make sure Kazoo is configured to use your carrier.
+If you are using BYOC, make sure Kazoo is configured to use your carrier.  
 
 ## Attributes
 
@@ -70,8 +70,6 @@ Pivot supports several TwiML nesting nouns for <Dial>, allowing callers to be co
 | [`<Device>`](./dial/device.md)         | ID of an existing Kazoo Device                                                           |
 | [`<Number>`](./dial/number.md)         | Plain text <Dial> with extended attributes                                               |
 | [`<Sip>`](./dial/sip.md)               | SIP URI to dial                                                                          |
-| [`<User>`](./dial/user.md)             | ID of an existing Kazoo User, see (Callflow Users)[] |
+| [`<User>`](./dial/user.md)             | ID of an existing Kazoo User, see (Callflow Users)[]                                     |
 
 ## Examples
-
-

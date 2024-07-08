@@ -1,14 +1,21 @@
 # Dial `<Device>` Noun
 
-@TODO description
+`<Dial>` will bridge the call to the provided Kazoo `<Device>`.
 
-@TODO content is plain text and represent device id inside the account. pivot uses the device id
-and creates endpoint and bridge the call to the device.
+`<Device>` expects a valid device ID configured in the Kazoo account, see the [Devices]() article for more information
 
 ## Attributes
 
-no atributes
+no additional atributes
 
 ## Examples
 
-- example
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Dial>
+        <Device>HAL9000Emergency</Device>
+    </Dial>
+</Response>
+```
+

@@ -1,15 +1,29 @@
 # Dial `<Number>` Noun
+Dial a phone number.
 
-@TODO description
-@TODO explain what happens when multiple Number is used (we create endpoints with call forward
-@TODO multi Number will create a device callfoeard endpoint
-@TODO we need to limit how many Number can specified????
+`<Number>` allows simulataneous dailing of up to ten phone numbers. Pivot will connect the call to the first number that answers, the others will be hung up.
+`<Dial>` can also use a single `<Number>` attribute
 
 ## Attributes
 
-@TODO: no attributes is supported atm
+No additional Attributes
 
 ## Examples
 
-- example
-- example multi Number
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Dial>
+        <Number>
+            555-123-4567
+        </Number>
+        <Number>
+            555-113-0451
+        </Number>
+        <Number>
+            610-987-1597
+        </Number>
+    </Dial>
+</Response>
+```
+
