@@ -24,7 +24,7 @@
       - 'doc/twiml/dial/sip.md'
       - 'doc/twiml/dial/user.md'
     - 'doc/twiml/gather.md'
-    - 'doc/twiml/hanguup.md'
+    - 'doc/twiml/hangup.md'
     - 'doc/twiml/pause.md'
     - 'doc/twiml/play.md'
     - 'doc/twiml/record.md'
