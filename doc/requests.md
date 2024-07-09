@@ -1,6 +1,8 @@
-# The Request Payload
+# Pivot Request Payload
 
 You can configure whether you receive the data as a query string in a `GET` or as a URL-encoded body in a `POST`.
+
+- @TODO document how to configure pivot `req_format`
 
 ## Payload
 

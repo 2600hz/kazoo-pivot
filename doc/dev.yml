@@ -1,18 +1,19 @@
-- 'Pivot: Dynamic Callflows':
-  - 'doc/README.md'
-  - 'doc/issues.md'
-  - 'doc/kazoo/README.md'
-  - 'doc/kazoo/bridging.md'
-  - 'doc/kazoo/collect.md'
-  - 'doc/kazoo/conferencing.md'
-  - 'doc/kazoo/dtmf.md'
-  - 'doc/kazoo/hangups.md'
-  - 'doc/kazoo/play.md'
-  - 'doc/kazoo/presence.md'
-  - 'doc/kazoo/recording.md'
-  - 'doc/kazoo/say.md'
-  - 'doc/requests.md'
-
+- 'Overview': 'doc/README.md'
+- Request Payload:
+  - Kazoo Request Type: 'doc/requests.md'
+  - Pivot TwiML requqest type: 'doc/requests.md' # <-- add twimk specific req format, this still kazoo
+- Response Formats:
+  - Kazoo Callflow JSON:
+    - 'doc/kazoo/README.md'
+    - 'doc/kazoo/bridging.md'
+    - 'doc/kazoo/collect.md'
+    - 'doc/kazoo/conferencing.md'
+    - 'doc/kazoo/dtmf.md'
+    - 'doc/kazoo/hangups.md'
+    - 'doc/kazoo/play.md'
+    - 'doc/kazoo/presence.md'
+    - 'doc/kazoo/recording.md'
+    - 'doc/kazoo/say.md'
   - 'Pivot TwiML':
     - 'doc/twiml/README.md'
     - 'doc/twiml/request_params.md'
