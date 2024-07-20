@@ -1,4 +1,4 @@
-# <Conference>
+# \<Conference>
 Connect callers to conferences and conference rooms
 @TODO description
 

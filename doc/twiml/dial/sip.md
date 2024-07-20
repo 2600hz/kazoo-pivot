@@ -1,4 +1,4 @@
-# <Sip>
+# \<Sip>
 
 @TODO description
 @TODO explain and document SIP url format here

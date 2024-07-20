@@ -1,4 +1,4 @@
-# <Reject>
+# \<Reject>
 reject calls without answering
 
 ## Overview
