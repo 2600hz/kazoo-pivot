@@ -1,4 +1,4 @@
-# \<Play>
+# <Play>`
 
 @TODO description
 @TODO explain how people can use Media API to upload media files to be used here
@@ -7,9 +7,10 @@
 
 ## Attributes
 
-| Name | Values Description | Default value |
-|------|--------------------|---------------|
-| [`loop`](#loop) | integer >=1 | 1 |
+| Name            | Values Description | Default value |
+|-----------------|--------------------|---------------|
+| [`loop`](#loop) | integer >=1        | 1             |
+|                 |                    |               |
 
 @TODO verify this
 | [`terminators`](#terminators) | | |
@@ -27,7 +28,7 @@ hangup or if a terminator was pressed by the user if used alongside the `termina
 @TODO describe what play conetnt can be: http/https, media ID, system prompt, silence (advanced options like tone, say and etc...)
 @TODO link to `say.md` about say: and TTS
 
-## NEsting
+## Nesting
 
 can only be nest under [`<Gather>`](./gather.md). You can't nest anything within this verb.
 

@@ -8,10 +8,10 @@ by previous Pivot terms, `<Reject>` will end the Pivot session.
 
 ## Attributes
 
-| Name                | Values Description  | Default value |
-|---------------------|---------------------|---------------|
-| [`reason`](#reason) | `rejected`\| `busy` | `rejected`    |
-| [`prompt`](#prompt) | A media URL         | none          |
+| Name                | Values Description        | Default value |
+|---------------------|---------------------------|---------------|
+| [`reason`](#reason) | `rejected`\| `busy`       | `rejected`    |
+| [`prompt`](#prompt) | URL \| Kazoo media handle | none          |
 
 
 
@@ -22,8 +22,8 @@ Pivot will set the call status as `reason`. Kazoo will determine the appropriate
 [//] # (I also don't know what kind of code this is. Presumably some kind of standardized telecom code.)
 
 ### `prompt`
-If `prompt` is set to a valid media URL, Pivot will playback that media to callers before 
-disconnecting the line without answering the call. 
+If `prompt` is set to a valid media URL or handle, Pivot will playback that media to callers 
+before disconnecting the line without answering the call. 
 See [Media](https://docs.2600hz.com/git/2600hz/crossbar/doc/media.md) in Kazoo for information 
 on uploading and using media files in Kazoo.
 

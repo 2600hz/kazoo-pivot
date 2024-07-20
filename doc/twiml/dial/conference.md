@@ -10,7 +10,7 @@ Connect callers to conferences and conference rooms
 - Conference names
 - Dynamic vs Static Profiles
 
-- Static conferences and 
+- Static conferences and dynamic profiles
 @TODO note static conferences (conference docs that are create previously in the account)
 using conf doc it
 @TODO explain profile names and how to configure, define them per account

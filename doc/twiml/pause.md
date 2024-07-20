@@ -13,9 +13,9 @@ You account still will be billed for any amount of wait your pausing the call fo
 
 ### `length`
 
-The amount of time in seconds to pause the call before conotinuing processing the rest of TwiML document.
-
-Minimum value is `1` and maximum value is `3600` (1 hour).
+The amount of time in seconds to pause the call before conotinuing processing the rest of TwiML 
+document.  
+Minimum value is `1` and maximum value is `3600` (1 hour).  
 
 ## NEesting
 
