@@ -1,7 +1,16 @@
 # Dial `<Conference>`Noun
-
+Connect callers to conferences and conference rooms
 @TODO description
 
+## Overview
+- Kazoo Conferences in brief
+- Conference profiles
+    - Static
+    - Dynamic
+- Conference names
+- Dynamic vs Static Profiles
+
+- Static conferences and 
 @TODO note static conferences (conference docs that are create previously in the account)
 using conf doc it
 @TODO explain profile names and how to configure, define them per account
@@ -11,16 +20,16 @@ using conf doc it
 
 ## Attributes
 
-| Name | Values Description | Default value |
-|------|--------------------|---------------|
-| [`beep`](#beep)| | |
-| [`conferenceId`](#conferenceId)| | |
-| [`endConferenceOnExit`](#endConferenceOnExit)| | |
-| [`maxParticipants`](#maxParticipants)| | |
-| [`muted`](#muted)| | |
-| [`profileName`](#profileName)| | |
-| [`startConferenceOnEnter`](#startConferenceOnEnter)| | |
-| [`waitUrl`](#waitUrl)| | |
+| Name                                                | Values Description | Default value |
+|-----------------------------------------------------|--------------------|---------------|
+| [`beep`](#beep)                                     |                    |               |
+| [`conferenceId`](#conferenceId)                     |                    |               |
+| [`endConferenceOnExit`](#endConferenceOnExit)       |                    |               |
+| [`maxParticipants`](#maxParticipants)               |                    |               |
+| [`muted`](#muted)                                   |                    |               |
+| [`profileName`](#profileName)                       |                    |               |
+| [`startConferenceOnEnter`](#startConferenceOnEnter) |                    |               |
+| [`waitUrl`](#waitUrl)                               |                    |               |
 
 @TODO confirm these
 | [`announceCount`](#announceCount)| | |

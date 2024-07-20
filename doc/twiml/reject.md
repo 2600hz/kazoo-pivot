@@ -1,5 +1,8 @@
 # TwiML Verb `<Reject>`
+reject calls
 
+## Overview
+if `<Reject>` is the first term in a Pivot TwiML document, 
 This verb will instruct Kazoo to reject the call with specified `reason` and `code` and
 optionally play a media before hanging up the call.
 

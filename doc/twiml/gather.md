@@ -1,46 +1,46 @@
-# TwiML Verb: `<Gather>`
+# \<Gather>  
+Get input from callers
 
-@TODO description
-@TODO verify eveything here, atrinutes, nounsm allowed or denied nouns, etc...
-@TODO this probably need cod e updates/fixes (why we allow all verbs as nouns???)
+## Overview  
 
-@TODO walkthoufh a simple example and explain what kazoo do in the call and what is going on on the call
+`<Gather>` digits by DTMF dial tones from callers. `<Gather>` Completes when the `timeout` is reached, the caller provides the expected `numDigits`, or when the caller presses the `finishOnKey`. Pivot will _always_ make an `action` request upon complletion if the caller provides digits. Otherwise, Pivot will render the next term of the document.  
 
 ## Attributes
 
-| Name | Values Description | Default value |
-|------|--------------------|---------------|
-| [`action`](#action)| | |
-| [`finishOnKey`](#finishOnKey)| | |
-| [`method`](#method)| | |
-| [`numDigits`](#numDigits)| | |
-| [`timeout`](#timeout)| | |
+| Name                          | Values Description         | Default value     |
+|-------------------------------|----------------------------|-------------------|
+| [`action`](#action)           | URL                        | Current Pivot URL |
+| [`finishOnKey`](#finishOnKey) | any single DTMF character  | `#`               |
+| [`method`](#method)           | `GET` \| `POST`            | `GET`             |
+| [`numDigits`](#numDigits)     | positive integer           | infinite          |
+| [`timeout`](#timeout)         | positive integer (seconds) | 5                 |
 
 
 ### `action`
-@TODO
+The URL where Pivot will make an http request if `<Gather>` completes with collected digits. (`method`)[#method] sets the http method of the request.  
+Pivot expects another Pivot document in response as either Kazoo JSON or TwiML, which will be executed.  
+Pivot never continues execution of the current document after an `action`, further terms will be unreachable. Unlike most other Pivot TwiML terms, `<Gather action="">` defaults to to the current Pivot URL, rather than `none`
 
 ### `finishOnKey`
-@TODO
+`<Gather>` will complete when this key is pressed and pivot will make an Action Request. Defaults to `#`
 
 ### `method`
-@TODO
+sets the http request method for the (`action`)[#action] request, either `POST` or `GET`. Pivot expects a response with more call instructions. See [Requests](./../requests.md) for information about the request and respose formats.
+Defaults to `GET`.
 
 ### `numDigits`
-@TODO
+Maximum number of digits Pivot will collect. Once the maximum is reached, Pivot will immediately make an `action` request.
 
 ### `timeout`
-@TODO
+Maximum amount of time pivot will wait before `<Gather>` completes. Defaults to 5s
 
-## Nesting Nouns
+## Nestable terms
+Pivot allows some terms to be executed during `<Gather>`. Execution of these terms stops as soon as Pivot recieves DTMF tones.
 
-@TODO description
-@TODO verify this, kazoo will exec_element which means any verb is possible as nouns! probabl this need to be fixed!
-
-| Noun         | Description |
-| ------------ | ------------|
-| [`<Pause>`](./pause.md)     | |
-| [`<Play>`](./play.md)     | |
-| [`<Say>`](./say.md)     | |
+| Noun                    | Description              |
+|-------------------------|--------------------------|
+| [`<Play>`](./play.md)   | Play media               |
+| [`<Pause>`](./pause.md) | Pause media playback     |
+| [`<Say>`](./say.md)     | speak to a caller by TTS |
 
 ## Examples

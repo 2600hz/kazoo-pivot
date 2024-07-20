@@ -1,20 +1,14 @@
 # TwiML verb: `<Hangup>`
+hangup calls
 
-This verb instructs Kazoo to hangup the call. Because this answers the call before hangup,
-you account still will be billed. You may want to `<Reject>` as your first verb to end the
-call to avoid charge to your account.
+## Overview
+Hangup the current call and end the Pivot session with `CallStatus=compeleted`.
 
-Pivot will stopp with `CallStatus` set to `compeleted`.
+If this is the only term in a Pivot TwiML document, the call will be answered and immediately hung up, and the Kazoo account will be charged for the call. [`<Reject>`](reject.md) may be preferable in some cases to avoid uncessary charges.
+
 
 ## Attrinutes
 
-No atrtobutes
-
-## Nesting
-
-No netsing, not nestable
+No attributes
 
 ## Examples
-
-@TODO
-

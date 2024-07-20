@@ -1,16 +1,18 @@
 # TwiML Verb: `<Dial>`
+Connect callers
 
 ## Overview
-<Dial> will connect an active call to another [endpoint](applications/crossbar/doc/endpoints.md). [Supported party types](#Nesting-Nouns)
+`<Dial>` will connect an active call to another [endpoint](applications/crossbar/doc/endpoints.md). [Supported party types](#Nesting-Nouns)
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Dial>555-459-0451</Dial>
 </Response>
 ```
-Pivot will attempt to dial the offnet number `555-459-0451`. Pivot will not execute the next term of the document  
-- until the callee disconnects the call, or  
-- unless the the callee does not answer
+Pivot will attempt to dial the offnet number `555-459-0451`. Pivot will not render the next term in the document until after the `<Dial>` completes when
+-  the callee disconnects the call
+-  the the callee does not answer
 
 If the original caller disconnects the call, Pivot will end the session and later terms in the document will not be executed.  
 
@@ -25,7 +27,7 @@ If you are using BYOC, make sure Kazoo is configured to use your carrier.
 | [`action`](#action)             | URL                        | none              |
 | [`callerId`](#callerId)         | any string                 | from caller       |
 | [`hangupOnStar`](#hangupOnStar) | `true` \| `false`          | `false`           |
-| [`method`](#method)             | `get` \| `post`            | `get`             |
+| [`method`](#method)             | `GET` \| `POST`            | `GET`             |
 | [`timeLimit`](#timeLimit)       | positive integer (seconds) | 14400 (4 hours)   |
 | [`timeout`](#timeout)           | positive integer (seconds) | [30*](#timelimit) |
 
@@ -39,17 +41,16 @@ If you are using BYOC, make sure Kazoo is configured to use your carrier.
 A URL where Pivot will make an http request once the `<Dial>` term completes. (`method`)[#method] sets the http method of the request.  
 Pivot expects another Pivot document in response as either Kazoo JSON or TwiML, which will be executed.  
 Pivot never continues execution of the current document after an `action`, further terms will be unreachable.  
-Defaults to 'get'
 
 ### `callerId`
 the caller ID the callee will see. Can be set to any value. Defaults to the caller's caller ID. 
 
 ### `hangupOnStar`
-Allows the original caller to hang up on the dialed party without ending the Pivot session. Dial execution completes, including sending requests to the `action` url if provided, and Pivot will attempt to execute the next term in the doucument.
+Allows the original caller to hang up on the dialed party without ending the Pivot session by pressing the * key. Dial execution completes, including sending requests to the `action` url if provided, and Pivot will attempt to execute the next term in the doucument.
 
 ### `method`
-sets the http request method for the (`action`)[#action] request \[so posts and gets don't appear to differentiate on return, and actually I don't quite see where the return gets processed into new stuff]
-
+sets the http request method for the (`action`)[#action] request, either `POST` or `GET`. Pivot expects a response with more call instructions. See [Requests](./../requests.md) for information about the request and respose formats.
+Defaults to `GET`.
 
 ### `timeLimit`
 Maximum call duration, in seconds. After `timeLimit` seconds pivot will automatically hang up the call, defaults to 14400 seconds (4 hours).
