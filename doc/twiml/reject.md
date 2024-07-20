@@ -1,32 +1,30 @@
-# TwiML Verb `<Reject>`
-reject calls
+# <Reject>
+reject calls without answering
 
 ## Overview
-if `<Reject>` is the first term in a Pivot TwiML document, 
-This verb will instruct Kazoo to reject the call with specified `reason` and `code` and
-optionally play a media before hanging up the call.
-
-This verb doesn't answer the call if the call is not already answered by any previous
-verbs. This can be useful to be used as first verb when your application wants to reject
-the call without causing your account to be charged for the call.
-
-@TODO description
+If `<Reject>` is the first term in a Pivot TwiML document, the call will rejected 
+without incurring carrier costs to the Kazoo account. If the call was already answered 
+by previous Pivot terms, `<Reject>` will end the Pivot session.  
 
 ## Attributes
 
-| Name | Values Description | Default value |
-|------|--------------------|---------------|
-| [`reason`](#reason) | Use to set call status: `rejected`, `busy` | `rejected` |
+| Name                | Values Description  | Default value |
+|---------------------|---------------------|---------------|
+| [`reason`](#reason) | `rejected`\| `busy` | `rejected`    |
+| [`prompt`](#prompt) | A media URL         | none          |
 
-@TODO kazoo only
-| [`prompt`](#prompt) | | |
-@TODO: maybe link to `Specifing the media to play` in ./media.md
+
 
 ### `reason`
-@TODO
+Pivot will set the call status as `reason`. Kazoo will determine the appropriate code from 
+`reason` when logging call metadata and provide it to the caller when the call is rejected.
+[//] # (So. This call end status stuff. Is there an app that listens for it? Like does this get picked up by anything else and recorded in, say, a call log?)
+[//] # (I also don't know what kind of code this is. Presumably some kind of standardized telecom code.)
 
-## Nesting
-
-cannot nest, won't accept next
+### `prompt`
+If `prompt` is set to a valid media URL, Pivot will playback that media to callers before 
+disconnecting the line without answering the call. 
+See [Media](https://docs.2600hz.com/git/2600hz/crossbar/doc/media.md) in Kazoo for information 
+on uploading and using media files in Kazoo.
 
 ## Examples
