@@ -1,4 +1,4 @@
-# TwiML verb: `<Hangup>`
+# \<Hangup>
 hangup calls
 
 ## Overview

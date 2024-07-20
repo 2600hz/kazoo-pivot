@@ -1,5 +1,5 @@
-# TwiML Verb: `<Dial>`
-Connect callers
+# <Dial>
+Connect callers to new telephone endpoints
 
 ## Overview
 `<Dial>` will connect an active call to another [endpoint](applications/crossbar/doc/endpoints.md). [Supported party types](#Nesting-Nouns)

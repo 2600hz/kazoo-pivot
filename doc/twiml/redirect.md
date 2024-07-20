@@ -1,4 +1,4 @@
-# TwiML Verb: `<Redirect>`
+# \<Redirect>
 
 @TODO description
 

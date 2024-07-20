@@ -1,4 +1,4 @@
-# TwiML Verb `<Record>`
+# \<Record>
 
 @TODO description
 @TODO talk and link about account must already have setup a storage plan for storing the recording files

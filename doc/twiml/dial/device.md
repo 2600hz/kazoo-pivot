@@ -1,4 +1,4 @@
-# Dial `<Device>` Noun
+# <Device>
 
 `<Dial>` will bridge the call to the provided Kazoo `<Device>`.
 

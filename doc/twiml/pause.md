@@ -1,4 +1,4 @@
-# TwiML Verb: `<Pause>`
+# \<Pause>
 
 This verb instruct Pivot to wait for specified amount if seconds before continuing
 processing the rest of TwiML document. The caller waits in silnce for the period of pause.

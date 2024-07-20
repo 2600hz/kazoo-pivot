@@ -1,4 +1,4 @@
-# TwiML Verb: `<Play>`
+# \<Play>
 
 @TODO description
 @TODO explain how people can use Media API to upload media files to be used here

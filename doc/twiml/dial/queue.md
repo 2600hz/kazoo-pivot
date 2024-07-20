@@ -1,4 +1,4 @@
-# Dial `<Queue>` Noun
+# <Queue>
 
 @TODO description
 @TODO ignore, not supported atm
