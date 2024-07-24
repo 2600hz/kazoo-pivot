@@ -1,25 +1,25 @@
 # \<Pause>
 
-This verb instruct Pivot to wait for specified amount if seconds before continuing
-processing the rest of TwiML document. The caller waits in silnce for the period of pause.
+`<Pause>` 
+Pivot will wait for `length` seconds before rendering the next term of the Pivot document. 
+The caller waits in silence for the period of pause.  
 
-You account still will be billed for any amount of wait your pausing the call for.
+Calls are still active while Pivot is rendering a `<Pause>` term, so the Kazoo account will
+still be billed for the paused period.  
 
 ## Attributes
-
-| Name | Values Description | Default value |
-|------|--------------------|---------------|
-| [`length`](#length) | a positive interger representing seconds to wait | 1 second |
+| Name                | Values Description         | Default value |
+|---------------------|----------------------------|---------------|
+| [`length`](#length) | positive integer (seconds) | 1             |
 
 ### `length`
 
-The amount of time in seconds to pause the call before conotinuing processing the rest of TwiML 
-document.  
-Minimum value is `1` and maximum value is `3600` (1 hour).  
+The time in seconds to pause the call before Pivot renders the next term. Minimum value is `1` 
+and maximum value is `3600` (1 hour).  
+Defaults to 1 second.
 
-## NEesting
-
-You cannot nest anything within this verb. This verb can only be nested within
-[`<Gather>`](./gather.md).
+## Nesting
+Can be nested under [`<Gather>`](./gather.md) to pause between sibling terms. Terms cannot be 
+nested within `<Pause>`. 
 
 ## Examples

@@ -15,8 +15,8 @@ provides digits. Otherwise, Pivot will render the next term of the document.
 | [`action`](#action)           | URL                        | Current Pivot URL |
 | [`finishOnKey`](#finishOnKey) | any single DTMF character  | `#`               |
 | [`method`](#method)           | `GET` \| `POST`            | `GET`             |
-| [`numDigits`](#numDigits)     | positive integer           | infinite          |
-| [`timeout`](#timeout)         | positive integer (seconds) | 5                 |
+| [`numDigits`](#numDigits)     | any positive integer           | infinite          |
+| [`timeout`](#timeout)         | any positive integer (seconds) | 5                 |
 
 
 ### `action`

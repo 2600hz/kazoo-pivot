@@ -1,7 +1,5 @@
 # Pivot - Programmable Callflow
 
-## Overview
-
 Pivot gives developers greater control over Callflows than what comes natively in Kazoo. Pivot attempts to gather relevant call data and then sends it, via HTTP to the developer's web server.
 Pivot expects a response with appropriate TwiML XML or Kazoo Callflow JSON, and will execute the callflow returned. The developer server can generate and reply with any callflow actions, so anything that can be done with callflows can be done dynamically with Pivot.
 

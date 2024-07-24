@@ -1,25 +1,23 @@
 # \<Redirect>
+Redirect to another Pivot callflow
 
-@TODO description
+## Overview  
 
-@TODO instead of URL in content, people can set multiple `<Variable>` to set on the call.
+`<Redirect>` will cause another Pivot HTTP request to the url in it's body. Pivot expects another 
+Pivot document in response as either Kazoo JSON or TwiML, which will be rendered. Pivot will not 
+continue execution of the current document after a `<Redirect>`, further terms will be unreachable.  
+
+[//]: # (@TODO instead of URL in content, people can set multiple `<Variable>` to set on the call.)
 
 ## Attributes
 
-| Name | Values Description | Default value |
-|------|--------------------|---------------|
-| [`method`](#method) | | |
-
-@TODO method and url will be use for subsequent new pivot request to the application
-
-@TODO We can add this so people can both use url and Variable these
-| [`url`](#url) | | |
+| Name                | Values Description | Default value |
+|---------------------|--------------------|---------------|
+| [`method`](#method) | `GET` \| `POST`    | `GET`         |
 
 ### `method`
-@TODO
-
-## Nesting
-
-Cannot be nested, not accepting any nests
+sets the http request method for the `<Redirect>` request, either `POST` or `GET`. Pivot 
+expects a response with more call instructions. See [Requests](./../requests.md) for information 
+about the request and respose formats.  
 
 ## Examples

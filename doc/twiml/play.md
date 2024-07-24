@@ -1,35 +1,37 @@
-# <Play>`
+# <Play>
+Play media for callers
 
-@TODO description
-@TODO explain how people can use Media API to upload media files to be used here
-@TODO explain how freeswitch/kazoo will cache the media (find out expiration time)
-@TODO epxlain supported media type
+## Overview
+Pivot will play the Kazoo Media Resource in the `<Play>` term body. 
 
 ## Attributes
 
-| Name            | Values Description | Default value |
-|-----------------|--------------------|---------------|
-| [`loop`](#loop) | integer >=1        | 1             |
-|                 |                    |               |
-
-@TODO verify this
-| [`terminators`](#terminators) | | |
-
+| Name                          | Values Description                  | Default value  |
+|-------------------------------|-------------------------------------|----------------|
+| [`loop`](#loop)               | any positive integer including zero | 1              |
+| [`terminators`](#terminators) | any dtmf characters                 | `0123456789*#` |
 
 ### `loop`
 
 Specifies how may times the audio file to be played to the user. By default the audio will
-play once. A value of `0` will plays the audio file indefinitly until either the caller
-hangup or if a terminator was pressed by the user if used alongside the `terminators` attributes.
+play once. A value of `0` will plays the audio file indefinitely until either one party disconects
+or the term otherwise completes from a [`terminator`](#terminator).
 
+### `terminators`
+When pressed, this key stops playback. `<Record>` will then complete. By default, any DTMF 
+character will halt playback.  
 
-## Specifing the media to play
+## Specifing Media to Play
 
-@TODO describe what play conetnt can be: http/https, media ID, system prompt, silence (advanced options like tone, say and etc...)
-@TODO link to `say.md` about say: and TTS
+If `prompt` is set to a valid media URL or handle, Pivot will playback that media to callers 
+before disconnecting the line without answering the call. 
+See [Media](https://docs.2600hz.com/git/2600hz/crossbar/doc/media.md) in Kazoo for information 
+on uploading and using media files in Kazoo.
 
 ## Nesting
 
-can only be nest under [`<Gather>`](./gather.md). You can't nest anything within this verb.
+Can be nested under [`<Gather>`](./gather.md) to play audio until the caller provides the first 
+DTMF.  
+Terms cannot be nested within `<Play>`.  
 
 ## Examples

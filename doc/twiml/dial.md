@@ -25,14 +25,14 @@ If you are using BYOC, make sure Kazoo is configured to use your carrier.
 
 ## Attributes
 
-| Name                            | Values Description         | Default value     |
-|---------------------------------|----------------------------|-------------------|
-| [`action`](#action)             | URL                        | none              |
-| [`callerId`](#callerId)         | any string                 | from caller       |
-| [`hangupOnStar`](#hangupOnStar) | `true` \| `false`          | `false`           |
-| [`method`](#method)             | `GET` \| `POST`            | `GET`             |
-| [`timeLimit`](#timeLimit)       | positive integer (seconds) | 14400 (4 hours)   |
-| [`timeout`](#timeout)           | positive integer (seconds) | [30*](#timelimit) |
+| Name                            | Values Description             | Default value     |
+|---------------------------------|--------------------------------|-------------------|
+| [`action`](#action)             | URL                            | none              |
+| [`callerId`](#callerId)         | any string                     | from caller       |
+| [`hangupOnStar`](#hangupOnStar) | `true` \| `false`              | `false`           |
+| [`method`](#method)             | `GET` \| `POST`                | `GET`             |
+| [`timeLimit`](#timeLimit)       | any positive integer (seconds) | 14400 (4 hours)   |
+| [`timeout`](#timeout)           | any positive integer (seconds) | [30*](#timelimit) |
 
 @TODO verify these:
 | [`collect_dtmf`](#collect_dtmf)| | |

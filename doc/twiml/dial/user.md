@@ -1,10 +1,13 @@
 # \<User>
+Dial a configured user
 
-@TODO description
-@TODO will create endpoints for the user which then uses all devices assigned to the user
+## Overview
+
+Kazoo will dial every device assigned to the user in the body of this term, and connect the call 
+to whichever picks up first.
 
 ## Attributes
 
-no atributes
+no attributes
 
 ## Examples
