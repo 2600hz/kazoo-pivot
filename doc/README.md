@@ -8,7 +8,7 @@ Pivot works with an existing call and cannot initiate a call by itself.
 
 ## How Pivot works
 
-A Pivot action can be created in your account using the Pivot app, or using Advanced Callflow. When the assigned number is called, Pivot will make a request to the configured URL. The developer server can use the `request parametrs` pivot sends to control and interact with the call. 
+A Pivot action can be created in your account using the Pivot app or using Advanced Callflows. When the assigned number is called, Pivot will make a request to the configured URL. The developer server can use the `request parametrs` pivot sends to control and interact with the call. 
 
 The Pivot app creates a special Callflow with one module, `pivot`. When a call comes in, Callflows gives control of the call to Pivot, which makes an http request to the configured server, expecting a reply containing Callflow JSON or supported TwiML XML.
 

@@ -17,9 +17,6 @@ iSpeech, Flite, Google TTS, and, Voice Fabric. To add iSpeech to a Kazoo account
 | [`voice`](#voice)             | any voices supported by the TTS engine, usually `male` or `female | account default TTS voice or `male` |
 | [`engine`](#engine)           | any engine configured in the Kazoo account                        | account default                     |
 
-[//]: # ('male' and 'female' voice sucks, just the worst way to deliniate two prototypically gendered voices.)
-[//]: # (Adjectives for pitch and timbre are much better, eg. `Tenor`|`Alto`. They're also more literally descriptive!)
-
 ### `loop`
 Specifies how may times the body text is said to the user. By default the text will
 play once. A value of `0` will loop the text indefinitely until either one party disconects
