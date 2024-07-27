@@ -10,12 +10,9 @@ TwiML format of request data send by Pivot will include the following parameters
 | `CallSid`             | `Call-ID`        | Unique identifier of the call leg                                                    |
 | `CallStatus`          | -                | What state the call is currently in                                                  |
 | `CallerName`          | `Caller-ID-Name` | Name of the caller, if any                                                           |
-| `CallerNumber`        |                  |                                                                                      |
 | `Direction`           | `Direction`      | Direction of the call (outbound if Kazoo originated the call, inbound otherwise)     |
 | `From`                | `From-User`      | Caller's number, if available                                                        |
-| `FromRealm`           |                  |                                                                                      |
 | `To`                  | `To-User`        | Dialed number                                                                        |
-| `ToRealm`             |                  |                                                                                      |
 
 @TODO call-status
 
