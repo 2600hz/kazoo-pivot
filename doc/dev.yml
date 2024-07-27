@@ -1,6 +1,5 @@
 - 'doc/README.md'
-- 'doc/kazoo/request_params.md'
-- 'doc/twiml/request_params.md' # <-- add twimk specific req format, this still kazoo
+- 'doc/requests.md'
 - Kazoo Callflow JSON Response Format:
   - 'doc/kazoo/README.md'
   - 'doc/kazoo/bridging.md'

@@ -1,45 +1,39 @@
-# Pivot Request Payloads
-
-Pivot can send requests in two formats, and two parameter styles
-
+# Pivot Requests
+Pivot can send requests to developer servesr with parameters in either the request URL query string 
+when `req_body_format` is set to `form`, or in the request body when `req_body_format` is set to `json`.  
 
 ## Payload
+These parameters are sent in every request. Pivot Twiml style parameters are used when `req_format` is `twiml`, Kazoo Callflow is used otherwise.
 
-These parameters are sent in every request.  
-
-| Kazoo Callflow Parameters | Pivot TwiML Parameters | Description                                  |
-|---------------------------|------------------------|----------------------------------------------|
-| Call-ID                   | CallSid                | The unique call identifier                   |
-| Account-ID                | AccountSid             | The account id receiving the call            |
-| Call-Status               | CallStatus             | Status of the call                           |
-| Api-Version               | ApiVerson              | The version of the API                       |
-| Direction                 | Direction              | The direction of the call, relative to Kazoo |
-| Caller-ID-Name            | CallerName             | Caller ID Name                               |
-| Caller-ID-Number          | CallerNumber           | Caller ID Number                             |
-| User-ID                   |                        | The Kazoo User identifier(s) of the caller   |
-| Language                  |                        | The caller's language preference             |
-| Recording-Url             |                        | Where the recording will be stored           |
-| Recording-Duration        |                        | How long the recording is                    |
-| Recording-ID              |                        | The recording id                             |
-| Digits                    |                        | Any DTMF (or collection of DTMFs) pressed    |
+| Kazoo Callflow Parameters | Pivot TwiML Parameters | Description                                                                      |
+|---------------------------|------------------------|----------------------------------------------------------------------------------|
+| Call-ID                   | CallSid                | The unique call identifier                                                       |
+| Account-ID                | AccountSid             | The account id receiving the call                                                |
+| Api-Version               | ApiVerson              | The version of the API                                                           |
+| Direction                 | Direction              | The direction of the call, relative to Kazoo                                     |
+| Caller-ID-Name            | CallerName             | Caller ID Name                                                                   |
+| Caller-ID-Number          | CallerNumber           | Caller ID Number                                                                 |
+| User-ID                   | -                      | The Kazoo User identifier(s) of the caller                                       |
+| Language                  | -                      | The caller's language preference                                                 |
+| Direction                 | Direction              | Direction of the call (outbound if Kazoo originated the call, inbound otherwise) |
+| To                        | To-User                | Dialed number, SIP endpoint or user                                              |
+| From                      | From-User              | Caller's number, if available                                                    |
+| ToRealm                   | To-Realm               | To SIP realm                                                                     |
+| FromRealm                 | From-Realm             | From SIP realm                                                                   |
 
 ### Optional Payload
-These parameters are sent in some requests.  
 
-| Kazoo Callflow Parameters | Pivot TwiML Parameters | Description              |
-|---------------------------|------------------------|--------------------------|
-| From-User                 | From                   | The SIP From username    |
-| From-Realm                |                        | The SIP From realm       |
-| To                        | `To`                   | The SIP To username      |
-| To-Realm                  |                        | The SIP To realm         |
-| Request                   |                        | The SIP Request username |
-| Request-Realm             |                        | The SIP Request realm    |
+These paramenters may be sent after certain callflow modules or Pivot TwiML terms.  
 
-
-Pivot can encode the request payload to a developer server in a query string when 
-configured as `GET`, or in the request body when configured as `POST`.
-
-[//]: # (@TODO document how to configure pivot `req_format`)
-
-## Payload
+| Kazoo Callflow Parameters | Pivot TwiML Parameters | Description                                           |
+|---------------------------|------------------------|-------------------------------------------------------|
+| Digits                    | Digits                 | Any DTMF (or collection of DTMFs) pressed             |
+| Call-Status               | CallStatus             | Status of the call                                    |
+| Recording-Url             | RecordingUrl           | Where a recording is sent when using external storage |
+| Recording-Duration        | RecordingDuration      | How long the recording is                             |
+| Recording-ID              | RecordingSid           | The recording id                                      |
+| `RecordingSid`            | `Media-Name`           | recording filename                                    |
+| `DialCallDuration`        | `Billing-Seconds`      | How many billable seconds in the call                 |
+| `DialCallSid`             | `Other-Leg-Unique-ID`  | Call-ID of the b-leg                                  |
+| `DialCallStatus`          | -                      | Call status of the b-leg                              |
 
