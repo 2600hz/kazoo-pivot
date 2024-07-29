@@ -16,7 +16,7 @@ Pivot will play the Kazoo Media Resource in the `<Play>` term body.
 ### `loop`
 
 Specifies how may times the audio file to be played to the user. By default the audio will
-play once. A value of `0` will plays the audio file indefinitely until either one party disconects
+play once. A value of `0` will plays the audio file indefinitely until either one party disconnects
 or the term otherwise completes from a [`terminator`](#terminator).
 
 ### `terminators`

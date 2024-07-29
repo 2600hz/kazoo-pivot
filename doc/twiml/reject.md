@@ -21,8 +21,10 @@ by previous Pivot terms, `<Reject>` will end the Pivot session.
 
 Pivot will set the call status as `reason`. Kazoo will determine the appropriate code from 
 `reason` when logging call metadata and provide it to the caller when the call is rejected.
-[//] # (So. This call end status stuff. Is there an app that listens for it? Like does this get picked up by anything else and recorded in, say, a call log?)
-[//] # (I also don't know what kind of code this is. Presumably some kind of standardized telecom code.)
+
+[//]: # (So. This call end status stuff. Is there an app that listens for it? Like does this get picked up by anything else and recorded in, say, a call log?)
+
+[//]: # (I also don't know what kind of code this is. Presumably some kind of standardized telecom code.)
 
 ### `prompt`
 

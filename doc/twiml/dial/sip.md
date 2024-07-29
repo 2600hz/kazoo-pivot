@@ -8,10 +8,10 @@ Pivot will make a sip route invitation to the SIP URI in the body of this term.
 
 ### SIP URIs
 
-There are many resources available documenting and explaining SIP protocol. A brief explaination
-of SIP Uniform Resource Identifiers (URIs) is provided here for convinience. 
+There are many resources available documenting and explaining SIP protocol. A brief explanation
+of SIP Uniform Resource Identifiers (URIs) is provided here for convenience. 
 
-Basic URIs contain at least the user and the host, and look like email addresses starting wtih 
+Basic URIs contain at least the user and the host, and look like email addresses starting with 
 `sip:`. the user precedes the @, and the host follows:
 ```<sip:asmith@2600hz.com>```
 Often in Kazoo, `display names` and `ports` are specified:
@@ -24,4 +24,4 @@ Extra parameters can be specified at the end of the uri:
 
 ## Attributes
 
-`<Sip>` does not support any aditional attributes.
+`<Sip>` does not support any additional attributes.

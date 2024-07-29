@@ -9,4 +9,4 @@ to whichever picks up first.
 
 ## Attributes
 
-`<User>` does not support any aditional attributes.
+`<User>` does not support any additional attributes.

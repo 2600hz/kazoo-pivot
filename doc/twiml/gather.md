@@ -6,7 +6,7 @@ Get input from callers
 
 `<Gather>` digits by DTMF dial tones from callers. `<Gather>` Completes when the `timeout` is 
 reached, the caller provides the expected `numDigits`, or when the caller presses the 
-`finishOnKey`. Pivot will _always_ make an `action` request upon complletion if the caller 
+`finishOnKey`. Pivot will _always_ make an `action` request upon completion if the caller 
 provides digits. Otherwise, Pivot will render the next term of the document.  
 
 ## Attributes
@@ -38,7 +38,8 @@ rather than `none`.
 
 sets the HTTP request method for the (`action`)[#action] request, either `POST` or `GET`. Pivot 
 expects a response with more call instructions. See [Requests](./../requests.md) for information 
-about the request and respose formats.  
+about the request and response formats.  
+
 Defaults to `GET`.
 
 ### `numDigits`
@@ -53,7 +54,7 @@ Maximum amount of time pivot will wait before `<Gather>` completes. Defaults to 
 ## Nestable terms
 
 Pivot allows some terms to be executed during `<Gather>`. Execution of these terms stops as soon 
-as Pivot recieves DTMF tones.  
+as Pivot receives DTMF tones.  
 
 | Noun                    | Description              |
 |-------------------------|--------------------------|

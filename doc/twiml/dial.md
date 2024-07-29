@@ -4,7 +4,8 @@ Connect callers to new telephone endpoints
 
 ## Overview
 
-`<Dial>` will connect an active call to another [endpoint](applications/crossbar/doc/endpoints.md). [Supported party types](#Nesting-Nouns)
+`<Dial>` will connect an active call to another [endpoint](applications/crossbar/doc/endpoints.md). 
+[Supported party types](#Nesting-Nouns)
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -52,13 +53,13 @@ The caller ID the callee will see. Can be set to any value. Defaults to the call
 
 Allows the original caller to hang up on the dialed party without ending the Pivot session by 
 pressing the * key. Dial execution completes, including sending requests to the `action` url if 
-provided, and Pivot will attempt to execute the next term in the doucument.  
+provided, and Pivot will attempt to execute the next term in the document.  
 
 ### `method`
 
 Sets the HTTP request method for the [`action`](#action) request, either `POST` or `GET`. Pivot 
 expects a response with more call instructions. See [Requests](./../requests.md) for information 
-about the request and respose formats.  
+about the request and response formats.  
 Defaults to `GET`.  
 
 ### `timeLimit`

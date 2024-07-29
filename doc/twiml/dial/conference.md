@@ -1,4 +1,5 @@
 # \<Conference>
+
 Connect callers to conferences and conference rooms
 
 ## Overview
@@ -10,6 +11,7 @@ Kazoo account.
 ## Attributes
 
 ### Body
+
 the name of the conference must be in the body of the term, otherwise the conference request will
 fail.
 
@@ -25,33 +27,40 @@ fail.
 | [`muted`](#muted)                                   | `true` \| `false`                          | `false`         |
 
 ### `id`
+
 Conferences are uniquely identified by the conference name and id. `id` defaults to a hash of
 the conference name.
 
 ### `profileName`
+
 The pre-set conference profile to use. Pivot can load configurations and settings from any
 conference set up in the Kazoo account. If the selected `profileName` isn't already registered 
-with the account, Kazoo will make a new profile for this conference. 2600Hz encorages developers
+with the account, Kazoo will make a new profile for this conference. 2600Hz encourages developers
 to prepare conference profiles in advance using the Conference API or App 
 for greater flexibility and predictability. 
 If `profileName` is unspecified, Pivot will use the account default conference profile.  
 
 ### `startConferenceOnEnter`
+
 Start the conference when this participant enters the conference room and identify them as a
 moderator.
 By default, all participants are moderators.
 
 ### `beep`
+
 Play a beep when this participant enters or exits the conference. The first participant
 to join the conference can override the profile beep settings.
 
 ### `maxParticipants`
+
 The maximum number of conference participants, further join requests will be rejected. Minimum of 3 
 maximum of 250.  
 Defaults to 250
 
 ### `deaf`
-If set to `true`, this participant will join deafed.
+
+If set to `true`, this participant will join deafened.
 
 ### `muted`
+
 If set to `true`, this participant will join muted.

@@ -24,14 +24,14 @@ stored with the kazoo account:
 </Response>
 ```
 
-Pivot TwiML elmements are called **terms**. Pivot renders terms one at a time from top to bottom, 
+Pivot TwiML elements are called **terms**. Pivot renders terms one at a time from top to bottom, 
 waiting for each term to complete before beginning to render the next term. Some terms have special
 nested behaviors, see the documentation for individual terms for more information.
 
 
 ## Pivot TwiML Terms
 
-Fewer of Kazoo's suite of call actions and features are available using Pivot Twiml than Pivot 
+Fewer of Kazoo's suite of call actions and features are available using Pivot TwiML than Pivot 
 Callflow Json.
 
 | Verb                          | Description                                               | Nestable terms                                                                                                                                         |
