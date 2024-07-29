@@ -1,14 +1,12 @@
-# Pivot TwiML Translator
+# Pivot TwiML
 
-Pivot supports a subset of TwiML to help ease you into Pivot with an existing TwiML-based application.
+Pivot supports a subset of TwiML to help ease you into Pivot with an existing TwiML-based application.  
 
-To use this translator your application must respond to Pivot request with `Content-Type:
-application/xml` HTTP header and a valud TwiML document.
+To use this Pivot TwiML a developer server must respond to Pivot requests with `Content-Type:
+application/xml` HTTP header and a valid TwiML document.  
 
-@TODO a bit decription on how twiml translator works, its culprits or differences to actual twiml if any, general erros it may returns if any
-
-TwiML is an XML-based with only one root XML element of `<Response>`. The TwiML must start
-with XML declaration.
+Pivot TwiML is an xml scripting language for routing and controlling calls in Kazoo. 
+Documents begin with an XML declaration and have one root element, `<response>`.  
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -17,9 +15,8 @@ with XML declaration.
 </Response>
 ```
 
-For example to play a media with ID `ad303920d65b486f1ba0e2c3fe274418` from your account
-you can response like:
-
+For example, a developer server could respond to a Pivot request with instructions to play media 
+stored with the kazoo account:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -27,27 +24,24 @@ you can response like:
 </Response>
 ```
 
-In TwiML elements under `Response` are called **verbs**. Pivot supports popular verbs and
-tries to behave as much as possible to the original behavior as much as possible. Verbs
-can have noun elements under them. Please refer to each verbs documentation to learn more about them.
+Pivot TwiML elmements are called **terms**. Pivot renders terms one at a time from top to bottom, 
+waiting for each term to complete before beginning to render the next term. Some terms have special
+nested behaviors, see the documentation for individual terms for more information.
 
-Verbs and nounds are processed from top to bottom. Some verbs or nouns may cause the rest
-of verbs or nouns after them to be not reachable, such as `<Hangup>`.
 
-## Pivot TwiML Verbs
+## Pivot TwiML Terms
 
-@TODO some fancy desciption or filler
+Fewer of Kazoo's suite of call actions and features are available using Pivot Twiml than Pivot 
+Callflow Json.
 
-| Verb         | Description                                              | Nestable Verbs and Nouns                                                    |
-|--------------|----------------------------------------------------------|-----------------------------------------------------------------------------|
-| [`<Dial>`](./dial.md)     | Connect the caller to other endpoints                    | plain text DID, `<Conference>`, `<Queue>`, `<Number>`, `<User>`, `<Device>` |
-| [`<Record>`](./record.md)   | Record the caller                                        |                                                                             |
-| [`<Gather>`](./gather.md)   | Collect DTMFs from the caller                            | `<Play>`, `<Say>`                                                           |
-| [`<Play>`](./play.md)     | Play a media file (mp3, wav) to the caller               |                                                                             |
-| [`<Say>`](./say.md)      | Use a TTS engine to say the supplied text                |                                                                             |
-| [`<Redirect>`](./redirect.md) | Like an HTTP Redirect, make another HTTP request         | `<Variable>`                                                                |
-| [`<Pause>`](./pause.md)    | Pause callflow execution for supplied number of seconds  |                                                                             |
-| [`<Hangup>`](./hangup.md)   | Hangup the caller                                        |                                                                             |
-| [`<Reject>`](./reject.md)   | Reject (and don't answer - won't start billing) the call |                                                                             |
-| [`<Set>`](./set.md)      | Key value pair(s) to store along-side the call           |                                                                             |
-
+| Verb                          | Description                                               | Nestable terms                                                                                                                                         |
+|-------------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`<Dial>`](./dial.md)         | Connect the caller to other endpoints                     | plain text numbers, [`<Conference>`](./dial/conference.md), [`<Number>`](./dial/number.md), [`<User>`](./dial/user.md), [`<Device>`](./dial/device.md) |
+| [`<Record>`](./record.md)     | Record the caller                                         |                                                                                                                                                        |
+| [`<Gather>`](./gather.md)     | Collect DTMFs from the caller                             | `<Play>`, `<Say>`                                                                                                                                      |
+| [`<Play>`](./play.md)         | Play a media file (mp3, wav) to the caller                |                                                                                                                                                        |
+| [`<Say>`](./say.md)           | Use a TTS engine to say supplied text                     |                                                                                                                                                        |
+| [`<Redirect>`](./redirect.md) | Like an HTTP Redirect, make another HTTP Pivot request    | `<Variable>`                                                                                                                                           |
+| [`<Pause>`](./pause.md)       | Pause callflow execution for a number of seconds          |                                                                                                                                                        |
+| [`<Hangup>`](./hangup.md)     | Hangup the call                                           |                                                                                                                                                        |
+| [`<Reject>`](./reject.md)     | Reject (without answering - won't start billing) the call |                                                                                                                                                        |
