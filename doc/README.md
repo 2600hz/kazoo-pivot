@@ -8,9 +8,9 @@ Pivot works with an existing call and cannot initiate a call by itself.
 
 ## How Pivot works
 
-A Pivot action can be created in your account using the Pivot app or using Advanced Callflows. When the assigned number is called, Pivot will make a request to the configured URL. The developer server can use the `request parametrs` pivot sends to control and interact with the call. 
+A Pivot action can be created in your account using the Pivot app or using Advanced Callflows. When the assigned number is called, Pivot will make a request to the configured URL. The developer server can use the `request parameters` pivot sends to control and interact with the call. 
 
-The Pivot app creates a special Callflow with one module, `pivot`. When a call comes in, Callflows gives control of the call to Pivot, which makes an http request to the configured server, expecting a reply containing Callflow JSON or supported TwiML XML.
+The Pivot app creates a special Callflow with one module, `pivot`. When a call comes in, Callflows gives control of the call to Pivot, which makes an HTTP request to the configured server, expecting a reply containing Callflow JSON or supported TwiML XML.
 
 You have control over how Pivot sends request to your applications and what your application can respond.
 
@@ -67,25 +67,29 @@ Required and optional parameters for the callflow `pivot` module. The Pivot App 
 Pivot expects a `200` response which includes a `Content-Type` header. Pivot uses the value of `Content-Type` to determine how to parse the response.
 If no `Content-Type` is set, `text/xml` will be assumed. Any unsupported `Content-Type` will result in failure. `Content-Type` can change with each request/response within one Pivot Session.
 
-Please note that if the developer server decides not to handle a call, it is still responsible for sending a response to end the call. For quick no answer, the server can send `200 OK`, with `Content-Type: aplication/xml` and body `<Response />`.
+Please note that if the developer server decides not to handle a call, it is still responsible for sending a response to end the call. For quick no answer, the server can send `200 OK`, with `Content-Type: aplication/xml` and body `<Response/>`.
 
-If a request times out or otherwise fails, Pivot will end the call with [one exception](#Edge Cases).
+If a request times out or otherwise fails, Pivot will end the call with [one exception](#edge-cases).
 ### Supported Callflow Formats
 Currently Pivot supports Kazoo JSON and TwiML XML responses from developer servers.
 
 #### Kazoo JSON
 [Kazoo JSON](./kazoo/README.md) is the Callflow JSON used throughout Kazoo. With this format the full power of Callflows is available, and actions behave exactly as they do in a normal callfow. Pivot uses this format when the `Content-Type` header of the developer server's response is `application/json`.
 
-For more complete reference of available actions, see the [Callfow Actions Reference Manual]().
+For more complete reference of available actions, see the [Callfow Actions Reference Manual](https://docs.2600hz.com/kazoo/callflow/).
 
 #### TwiML XML
 
 Pivot supports a subset of TwiML Verbs and Nouns for easier interoperability with and migration from Twilio. Some advanced Callflow actions may not be replicable using only TwiML support. Pivot uses this format when the `Content-Type` header of the developer server's response is `application/xml` or `text/xml`.
 
 ## Edge Cases
+
 Edge cases developers and integrators may wish to be aware of.
+
 #### The first HTTP request to the developer server fails
+
 A `pivot` is almost always a terminal callflow action. However, if the initial pivot request fails, Kazoo will fallback and continue executing the programmable Callflow that created the pivot. 
 For pivot callflows created using the Pivot App, the callflow is otherwise empty, so Kazoo ends the call.
 #### Subsequent requests to the developer server fail
+
 Pivot can make more than one request to developer servers when pivot callflows contain TwIML `action` terms or additional `pivot` modules. If those fail, Pivot ends the call.
