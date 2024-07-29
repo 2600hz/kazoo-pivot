@@ -1,4 +1,4 @@
-# <Play>
+# \<Play>
 
 Play media for callers
 
@@ -24,7 +24,7 @@ or the term otherwise completes from a [`terminator`](#terminator).
 When pressed, this key stops playback. `<Record>` will then complete. By default, any DTMF 
 character will halt playback.  
 
-## Specifing Media to Play
+## Specifying Media to Play
 
 If `prompt` is set to a valid media URL or handle, Pivot will playback that media to callers 
 before disconnecting the line without answering the call. 
