@@ -24,7 +24,7 @@ configured differently.
 ### `loop`
 
 Specifies how may times the body text is said to the user. By default the text will
-play once. A value of `0` will loop the text indefinitely until either one party disconects
+play once. A value of `0` will loop the text indefinitely until either one party disconnects
 or the term otherwise completes from a [`terminator`](#terminator).  
 
 ### `terminator`

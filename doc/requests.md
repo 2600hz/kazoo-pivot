@@ -1,15 +1,15 @@
 # Pivot Requests
-Pivot can send requests to developer servesr with parameters in either the request URL query string 
+Pivot can send requests to developer servers with parameters in either the request URL query string 
 when `req_body_format` is set to `form`, or in the request body when `req_body_format` is set to `json`.  
 
 ## Payload
-These parameters are sent in every request. Pivot Twiml style parameters are used when `req_format` is `twiml`, Kazoo Callflow is used otherwise.
+These parameters are sent in every request. Pivot TwiML style parameters are used when `req_format` is `twiml`, Kazoo Callflow is used otherwise.
 
 | Kazoo Callflow Parameters | Pivot TwiML Parameters | Description                                                                      |
 |---------------------------|------------------------|----------------------------------------------------------------------------------|
 | Call-ID                   | CallSid                | The unique call identifier                                                       |
 | Account-ID                | AccountSid             | The account id receiving the call                                                |
-| Api-Version               | ApiVerson              | The version of the API                                                           |
+| Api-Version               | ApiVersion              | The version of the API                                                           |
 | Direction                 | Direction              | The direction of the call, relative to Kazoo                                     |
 | Caller-ID-Name            | CallerName             | Caller ID Name                                                                   |
 | Caller-ID-Number          | CallerNumber           | Caller ID Number                                                                 |
@@ -23,7 +23,7 @@ These parameters are sent in every request. Pivot Twiml style parameters are use
 
 ### Optional Payload
 
-These paramenters may be sent after certain callflow modules or Pivot TwiML terms.  
+These parameters may be sent after certain callflow modules or Pivot TwiML terms.  
 
 | Kazoo Callflow Parameters | Pivot TwiML Parameters | Description                                           |
 |---------------------------|------------------------|-------------------------------------------------------|
