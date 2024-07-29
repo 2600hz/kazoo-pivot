@@ -1,7 +1,7 @@
-- 'doc/README.md'
+- '!q:doc/README.md'
 - 'doc/requests.md'
 - Kazoo Callflow JSON Response Format:
-  - 'doc/kazoo/README.md'
+  - '!f:doc/kazoo/README.md'
   - 'doc/kazoo/bridging.md'
   - 'doc/kazoo/collect.md'
   - 'doc/kazoo/conferencing.md'
@@ -11,10 +11,10 @@
   - 'doc/kazoo/presence.md'
   - 'doc/kazoo/recording.md'
   - 'doc/kazoo/say.md'
-- 'Pivot TwiML Reponse Format':
+- 'Pivot TwiML Response Format':
   - 'doc/twiml/README.md'
   # - 'doc/twiml/request_params.md'
-  - '<Dial>': 'doc/twiml/dial.md'
+  - '<Dial>': '!f:doc/twiml/dial.md'
   - '<Dial> Nouns': 
     - '<Number>': 'doc/twiml/dial/number.md'
     - '<Conference>': 'doc/twiml/dial/conference.md'
