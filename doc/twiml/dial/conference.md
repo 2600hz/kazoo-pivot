@@ -5,14 +5,14 @@
 ## Overview
 
 Kazoo conferences use profiles to save and load conference settings. Pivot can create
-and save profiles dynamically, or use any previously configured conference profile. in the 
+and save profiles dynamically, or use any previously configured conference profile in the 
 Kazoo account.
 
 ## Attributes
 
 ### Body
 
-the name of the conference must be in the body of the term, otherwise the conference request will
+The name of the conference must be in the body of the term, otherwise the conference request will
 fail.
 
 ### Parameters
