@@ -1,6 +1,6 @@
 # \<Number>
 
-Dial a phone number.
+`<Dial>` phone numbers
 
 ## Overview
 

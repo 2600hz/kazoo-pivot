@@ -1,6 +1,6 @@
 # \<Reject>
 
-reject calls without answering
+Reject calls without answering
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # \<User>
 
-Dial a configured user
+`<Dial>` a configured user
 
 ## Overview
 

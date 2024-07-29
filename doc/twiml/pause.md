@@ -1,5 +1,6 @@
 # \<Pause>
-`<Pause>` rendering
+
+`<Pause>` Pivot rendering
 
 ## Overview
 

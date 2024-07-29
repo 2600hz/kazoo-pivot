@@ -1,6 +1,6 @@
 # \<Conference>
 
-Connect callers to conferences and conference rooms
+`<Dial>` and connect callers to conferences and conference rooms
 
 ## Overview
 
