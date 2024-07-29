@@ -1,4 +1,4 @@
-# \<Dial>
+# <Dial>
 Connect callers to new telephone endpoints
 
 ## Overview
