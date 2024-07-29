@@ -1,14 +1,15 @@
 # \<Conference>
 Connect callers to conferences and conference rooms
-@TODO description
 
 ## Overview
+
 - Kazoo Conferences in brief
 - Conference profiles
     - Static
     - Dynamic
 - Conference names
 - Dynamic vs Static Profiles
+
 
 - Static conferences and dynamic profiles
 @TODO note static conferences (conference docs that are create previously in the account)
@@ -63,7 +64,11 @@ using conf doc it
 @TODO
 
 ### `profileName`
-@TODO
+The pre-set conference profile to use. Pivot can load configurations and settings from any
+conference set up in the Kazoo account. 
+If the selected `profileName` isn't already registered with the account, Kazoo will make a new profile for 
+this conference. 
+If `profileName` is unspecified, Pivot will use the account default conference profile.  
 
 ### `startConferenceOnEnter`
 @TODO
