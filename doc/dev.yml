@@ -29,4 +29,4 @@
   - 'doc/twiml/redirect.md'
   - 'doc/twiml/reject.md'
   - 'doc/twiml/say.md'
-  - 'doc/twiml/set.md'
+  # - 'doc/twiml/set.md'
