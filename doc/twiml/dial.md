@@ -34,11 +34,7 @@ If you are using BYOC, make sure Kazoo is configured to use your carrier.
 | [`timeLimit`](#timeLimit)       | any positive integer (seconds) | 14400 (4 hours)   |
 | [`timeout`](#timeout)           | any positive integer (seconds) | [30*](#timelimit) |
 
-@TODO verify these:
-| [`collect_dtmf`](#collect_dtmf)| | |
-| [`continueOnFail`](#continueOnFail)| | |
-| [`hangupOn`](#hangupOn)| | |  
-| [`record`](#record)| | |
+
 
 ### `action`
 The URL where Pivot will make an http request once the `<Dial>` term completes. 
