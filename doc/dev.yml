@@ -13,7 +13,7 @@
   - 'doc/kazoo/say.md'
 - 'Pivot TwiML Reponse Format':
   - 'doc/twiml/README.md'
-  - 'doc/twiml/request_params.md'
+  # - 'doc/twiml/request_params.md'
   - 'doc/twiml/dial.md'
   - '<Dial> Nouns': 
     - 'doc/twiml/dial/number.md'
@@ -21,7 +21,7 @@
     - 'doc/twiml/dial/device.md'
     - 'doc/twiml/dial/sip.md'
     - 'doc/twiml/dial/user.md'
-  - 'doc/twiml/gather.md'
+  - '<Gather>': 'doc/twiml/gather.md'
   - 'doc/twiml/hangup.md'
   - 'doc/twiml/pause.md'
   - 'doc/twiml/play.md'

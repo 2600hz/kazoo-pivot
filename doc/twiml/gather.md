@@ -20,8 +20,8 @@ provides digits. Otherwise, Pivot will render the next term of the document.
 
 
 ### `action`
-The URL where Pivot will make an http request if `<Gather>` completes with collected digits. 
-(`method`)[#method] sets the http method of the request. Pivot expects another Pivot document in 
+The URL where Pivot will make an HTTP request if `<Gather>` completes with collected digits. 
+(`method`)[#method] sets the HTTP method of the request. Pivot expects another Pivot document in 
 response as either Kazoo JSON or TwiML, which will be rendered. Pivot never continues execution of 
  the current document after an `action`, further terms will be unreachable. 
 
@@ -32,7 +32,7 @@ rather than `none`.
 `<Gather>` will complete when this key is pressed and pivot will make an Action Request. Defaults to `#`
 
 ### `method`
-sets the http request method for the (`action`)[#action] request, either `POST` or `GET`. Pivot 
+sets the HTTP request method for the (`action`)[#action] request, either `POST` or `GET`. Pivot 
 expects a response with more call instructions. See [Requests](./../requests.md) for information 
 about the request and respose formats.  
 Defaults to `GET`.

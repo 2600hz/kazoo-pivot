@@ -22,8 +22,8 @@ using the `recordingUrl` attribute. To retrieve calls stored by 2600Hz, see
 | [`recordingUrl`](#recordingUrl) | URL                                           | none           |
 
 ### `action`  
-The URL where Pivot will make an http request once the `<Record>` term completes.
-(`method`)[#method] sets the http method of the request. Pivot expects another Pivot document in 
+The URL where Pivot will make an HTTP request once the `<Record>` term completes.
+(`method`)[#method] sets the HTTP method of the request. Pivot expects another Pivot document in 
 response as either 2600Hz JSON or TwiML, which will be rendered. Pivot never continues execution 
 of the current document after an `action`, further terms will be unreachable.  
 
@@ -35,7 +35,7 @@ character will end recording.
 Pivot will stop recording after `maxLength` seconds and complete rendering `<Record>`.  
 
 ### `method`  
-Pivot sets the http request method for the (`action`)[#action] request, either `POST` or `GET`. 
+Pivot sets the HTTP request method for the (`action`)[#action] request, either `POST` or `GET`. 
 Pivot expects a response with more call instructions. See [Requests](./../requests.md) for 
 information about the request and respose formats.  
 Defaults to `GET`.  
