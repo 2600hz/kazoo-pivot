@@ -11,7 +11,7 @@
   - 'doc/kazoo/presence.md'
   - 'doc/kazoo/recording.md'
   - 'doc/kazoo/say.md'
-- 'Pivot TwiML Response Format':
+- Pivot TwiML Response Format:
   - 'doc/twiml/README.md'
   # - 'doc/twiml/request_params.md'
   - '<Dial>': '!f:doc/twiml/dial.md'
