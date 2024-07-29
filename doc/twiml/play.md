@@ -1,7 +1,9 @@
 # <Play>
+
 Play media for callers
 
 ## Overview
+
 Pivot will play the Kazoo Media Resource in the `<Play>` term body. 
 
 ## Attributes
@@ -18,6 +20,7 @@ play once. A value of `0` will plays the audio file indefinitely until either on
 or the term otherwise completes from a [`terminator`](#terminator).
 
 ### `terminators`
+
 When pressed, this key stops playback. `<Record>` will then complete. By default, any DTMF 
 character will halt playback.  
 

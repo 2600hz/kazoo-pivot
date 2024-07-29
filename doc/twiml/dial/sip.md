@@ -1,10 +1,13 @@
 # \<Sip>
+
 `<Dial>` a SIP endpoint
 
 ## Overview
+
 Pivot will make a sip route invitation to the SIP URI in the body of this term.
 
 ### SIP URIs
+
 There are many resources available documenting and explaining SIP protocol. A brief explaination
 of SIP Uniform Resource Identifiers (URIs) is provided here for convinience. 
 
@@ -21,5 +24,4 @@ Extra parameters can be specified at the end of the uri:
 
 ## Attributes
 
-No attributes
-
+`<Sip>` does not support any aditional attributes.

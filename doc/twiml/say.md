@@ -1,7 +1,9 @@
 # \<Say>
+
 Use a Text-To-Speech Engine in Calls  
 
 ## Overview 
+
 Pivot will use a TTS engine to say text in the body of the term.
 To use `<Say>`, the Kazoo account must have a TTS engine configured. Currently, Kazoo supports
 iSpeech, Flite, Google TTS, and, Voice Fabric. To add iSpeech to a Kazoo account, follow 
@@ -18,25 +20,30 @@ iSpeech, Flite, Google TTS, and, Voice Fabric. To add iSpeech to a Kazoo account
 | [`engine`](#engine)           | any engine configured in the Kazoo account                        | account default                     |
 
 ### `loop`
+
 Specifies how may times the body text is said to the user. By default the text will
 play once. A value of `0` will loop the text indefinitely until either one party disconects
 or the term otherwise completes from a [`terminator`](#terminator).  
 
 ### `terminator`
+
 When pressed, this key stops playback. `<Record>` will then complete. By default, any DTMF 
 character will halt playback.  
 
 ### `language`
+
 Check the TTS engine for available languages.  
 If unspecified, Pivot will use to the default TTS language for the Kazoo account. If no account
 default is configured, Pivot defaults to `en-us`.  
 
 ### `voice`
+
 Check the TTS engine for available voices, most support `male` and `female`.  
 If unspecified, Pivot will use to the default `voice` for the Kazoo account. If no account
 default is configured, Pivot defaults to `male`.  
 
 ### `engine`
+
 Select from configured TTS engines available to the Kazoo account. Each `<Say>` term can use
 a different engine, if desired.  
 

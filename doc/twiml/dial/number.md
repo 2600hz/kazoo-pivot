@@ -1,12 +1,16 @@
 # \<Number>
+
 Dial a phone number.
 
-`<Number>` allows simulataneous dailing of up to ten phone numbers. Pivot will connect the call to the first number that answers, the others will be hung up.
-`<Dial>` can also use a single `<Number>` attribute
+## Overview
+
+`<Number>` allows simulataneous dailing of up to ten phone numbers. Pivot will connect the call to 
+the first number that answers, the others will be hung up. `<Dial>` can also use a single 
+`<Number>` attribute.
 
 ## Attributes
 
-No additional attributes
+`<Number>` does not support any aditional attributes.
 
 ## Examples
 

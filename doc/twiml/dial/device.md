@@ -1,8 +1,8 @@
 # \<Device>
 
-`<Dial>` will bridge the call to the provided Kazoo `<Device>`.
-
-`<Device>` expects a valid device ID configured in the Kazoo account, see the [Devices]() article for more information
+`<Dial>` will bridge the call to the provided Kazoo `<Device>`.  
+`<Device>` expects a valid device ID configured in the Kazoo account, see the [Devices]() article 
+for more information.
 
 ## Attributes
 

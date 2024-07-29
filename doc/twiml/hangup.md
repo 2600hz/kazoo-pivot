@@ -9,5 +9,4 @@ in some cases to avoid uncessary charges.
 
 ## Attributes
 
-No attributes
-
+`<Hangup>` does not support any aditional attributes.

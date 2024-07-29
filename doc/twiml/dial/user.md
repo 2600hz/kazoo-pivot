@@ -1,4 +1,5 @@
 # \<User>
+
 Dial a configured user
 
 ## Overview
@@ -8,5 +9,4 @@ to whichever picks up first.
 
 ## Attributes
 
-no attributes
-
+`<User>` does not support any aditional attributes.
