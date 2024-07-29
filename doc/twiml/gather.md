@@ -54,4 +54,3 @@ as Pivot recieves DTMF tones.
 | [`<Pause>`](./pause.md) | Pause media playback     |
 | [`<Say>`](./say.md)     | speak to a caller by TTS |
 
-## Examples

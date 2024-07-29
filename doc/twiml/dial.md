@@ -86,4 +86,3 @@ variety of endpoints.
 | [`<Sip>`](./dial/sip.md)               | SIP URI to dial                                                                          |
 | [`<User>`](./dial/user.md)             | ID of an existing Kazoo User, see (Callflow Users)[]                                     |
 
-## Examples

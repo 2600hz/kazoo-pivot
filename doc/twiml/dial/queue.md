@@ -10,4 +10,3 @@ content is plain text representing queue id
 
 @TODO: not supported
 
-## Examples

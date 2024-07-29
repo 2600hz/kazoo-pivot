@@ -34,4 +34,3 @@ Can be nested under [`<Gather>`](./gather.md) to play audio until the caller pro
 DTMF.  
 Terms cannot be nested within `<Play>`.  
 
-## Examples

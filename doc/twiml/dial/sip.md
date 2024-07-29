@@ -23,4 +23,3 @@ Extra parameters can be specified at the end of the uri:
 
 No attributes
 
-## Examples

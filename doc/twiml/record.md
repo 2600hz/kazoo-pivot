@@ -49,6 +49,3 @@ Pivot will record silence on the line for `timeout` seconds before ending the re
 `<Record>` can still continue after a recording timeout.  
 `timout="0"` Will disable timeout.  
 
-## Examples
-
-- simple rcord

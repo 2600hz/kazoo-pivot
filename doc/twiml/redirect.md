@@ -20,4 +20,3 @@ sets the http request method for the `<Redirect>` request, either `POST` or `GET
 expects a response with more call instructions. See [Requests](./../requests.md) for information 
 about the request and respose formats.  
 
-## Examples

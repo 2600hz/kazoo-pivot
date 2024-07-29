@@ -6,7 +6,7 @@ Dial a phone number.
 
 ## Attributes
 
-No additional Attributes
+No additional attributes
 
 ## Examples
 

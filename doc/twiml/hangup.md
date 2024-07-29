@@ -11,4 +11,3 @@ in some cases to avoid uncessary charges.
 
 No attributes
 
-## Examples

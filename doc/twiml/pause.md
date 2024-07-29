@@ -22,4 +22,3 @@ Defaults to 1 second.
 Can be nested under [`<Gather>`](./gather.md) to pause between sibling terms. Terms cannot be 
 nested within `<Pause>`. 
 
-## Examples

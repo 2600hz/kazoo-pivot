@@ -45,5 +45,3 @@ a different engine, if desired.
 Can be nested under [`<Gather>`](./gather.md) to play TTS until the caller provides the first 
 DTMF.  
 Terms cannot be nested within `<Say>`.  
-
-## Examples

@@ -10,4 +10,3 @@ to whichever picks up first.
 
 no attributes
 
-## Examples
