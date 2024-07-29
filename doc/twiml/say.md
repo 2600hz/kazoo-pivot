@@ -5,10 +5,10 @@ Use a Text-To-Speech Engine in Calls
 ## Overview 
 
 Pivot will use a TTS engine to say text in the body of the term.
-To use `<Say>`, the Kazoo account must have a TTS engine configured. Currently, Kazoo supports
+To use `<Say>`, the Kazoo account must have a TTS engine configured. Currently, Kazoo supports 
 iSpeech, Flite, Google TTS, and, Voice Fabric. To add iSpeech to a Kazoo account, follow 
-[this tutorial](https://docs.2600hz.com/git/{2600hz}/{docs-sysadmin}/{doc/config/adding-ispeech-tts.md}).  
-
+[this tutorial](https://docs.2600hz.com/git/2600hz/docs-sysadmin/doc/config/adding-ispeech-tts.md). 
+Kazoo ships with Flite configured for use out of the box. 
 ## Attributes
 
 | Name                          | Values Description                                                | Default value                       |
