@@ -547,7 +547,6 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
 
 -spec process_resp(kz_term:api_binary(), kapps_call:call(), kz_term:api_ne_binary(), binary()) ->
           {'stop_call', kapps_call:call()} |
-          {'stop_with_response', kapps_call:call()} |
           {'request', kapps_call:call()} |
           {'usurp', kapps_call:call()}.
 process_resp(_, Call, _, <<>>) ->
