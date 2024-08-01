@@ -48,6 +48,7 @@
                ,custom_request_headers = [] :: kz_json:json_proplist()
                ,method = 'get' :: http_method()
                ,call :: kapps_call:call() | 'undefined'
+               ,call_id :: kz_term:ne_binary()
                ,request_id :: kz_http:req_id() | 'undefined'
                ,request_params :: kz_term:api_object()
                ,response_headers :: kz_term:binaries() | kz_term:api_ne_binary()
@@ -114,26 +115,25 @@ usurp_executor(Srv) -> gen_listener:cast(Srv, 'usurp').
 
 -spec maybe_relay_event(kz_json:object(), kz_term:proplist()) -> 'ok'.
 maybe_relay_event(JObj, Props) ->
-    _ = case props:get_value('pid', Props) of
-            P when is_pid(P) -> kapps_call_command:relay_event(P, JObj);
-            _ -> 'ok'
-        end,
-    _ = case props:get_value('pids', Props) of
-            [_|_]=Pids ->
-                [kapps_call_command:relay_event(P, JObj) || P <- Pids];
-            _ -> 'ok'
-        end,
-    handle_call_event(JObj, Props).
-
--spec handle_call_event(kz_json:object(), kz_term:proplist()) -> 'ok'.
-handle_call_event(JObj, Props) ->
-    case kz_api:event_type(JObj) of
-        {<<"call_event">>, <<"CHANNEL_DESTROY">>} ->
-            lager:debug("channel destroyed, saving cdrs and hanging up..."),
+    Pids = response_handler_pids(Props),
+    CallId = props:get_value('call_id', Props),
+    case {kz_api:event_type(JObj), kz_call_event:call_id(JObj)} of
+        {{<<"call_event">>, <<"CHANNEL_DESTROY">>}, CallId} ->
+            lager:debug("caller channel destroyed, saving cdrs..."),
+            _ = [kapps_call_command:relay_event(P, JObj) || P <- Pids],
             Pid = props:get_value('server', Props),
             gen_listener:cast(Pid, {'cdr', JObj});
-        {_Cat, _Evt} ->
-            lager:debug("ignoring event ~s/~s", [_Cat, _Evt])
+        {{_Cat, _Evt}, _EventCallId} ->
+            lager:debug("relaying event ~s/~s to ~p (original call-id ~s)", [_Cat, _Evt, Pids, CallId]),
+            [kapps_call_command:relay_event(P, JObj) || P <- Pids]
+    end.
+
+-spec response_handler_pids(kz_term:proplist()) -> [pid()].
+response_handler_pids(Props) ->
+    Pid = props:get_value('pid', Props),
+    case props:get_value('pids', Props) of
+        [_|_]=Pids -> [P || P <- [Pid | Pids], is_pid(P)];
+        _ -> [P || P <- [Pid], is_pid(P)]
     end.
 
 %%%=============================================================================
@@ -170,6 +170,7 @@ init(Call, JObj, 'false') ->
            ,method = Method
            ,cdr_uri=kz_json:get_value(<<"CDR-URI">>, JObj)
            ,call=kzt_util:increment_iteration(Call)
+           ,call_id=kapps_call:call_id(Call)
            ,request_format=ReqFormat
            ,request_body_format=ReqBodyFormat
            ,request_timeout_ms=kz_json:get_integer_value(<<"Request-Timeout">>, JObj, ?DEFAULT_REQ_TIMEOUT_MS)
@@ -270,7 +271,7 @@ handle_cast({'cdr', _JObj}
                   ,call=Call
                   }=State
            ) ->
-    lager:debug("recv cdr for call, no cdr uri though"),
+    lager:debug("recv cdr for call, no cdr uri though, hard stopping..."),
     erlang:send_after(3 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
     {'noreply', State};
 handle_cast({'cdr', JObj}
@@ -279,6 +280,8 @@ handle_cast({'cdr', JObj}
                   ,debug=Debug
                   }=State
            ) ->
+    lager:debug("sending cdr to cdr_uri ~s", [Url]),
+
     JObj1 = kz_json:delete_key(<<"Custom-Channel-Vars">>, JObj),
     Body =  kz_http_util:json_to_querystring(kz_api:remove_defaults(JObj1)),
     Headers = [{"Content-Type", "application/x-www-form-urlencoded"}],
@@ -288,7 +291,7 @@ handle_cast({'cdr', JObj}
     case kz_http:post(kz_term:to_list(Url), Headers, Body) of
         {'ok', RespCode, RespHeaders, RespBody} ->
             maybe_debug_resp(Debug, Call, integer_to_binary(RespCode), RespHeaders, RespBody),
-            lager:debug("recv ~p from cdr url ~s", [RespCode, Url]);
+            lager:debug("got response code ~p from cdr_uri", [RespCode]);
         {'error', _E} ->
             lager:debug("failed to send CDR: ~p", [_E])
     end,
@@ -441,10 +444,12 @@ handle_info(_Info, State) ->
 -spec handle_event(kz_json:object(), state()) -> gen_listener:handle_event_return().
 handle_event(_JObj, #state{response_pid=Pid
                           ,response_event_handlers=Pids
+                          ,call_id = CallId
                           }
             ) ->
     {'reply', [{'pid', Pid}
               ,{'pids', Pids}
+              ,{'call_id', CallId}
               ]}.
 
 %%------------------------------------------------------------------------------
