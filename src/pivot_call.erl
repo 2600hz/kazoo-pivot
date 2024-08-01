@@ -93,11 +93,6 @@ start_link(Call, JObj) ->
 -spec stop_call(pid(), kapps_call:call()) -> 'ok'.
 stop_call(Srv, Call) -> gen_listener:cast(Srv, {'stop_call', Call}).
 
--spec stop_with_response(pid(), kapps_call:call()) -> 'ok'.
-stop_with_response(Srv, Call) ->
-    erlang:send_after(?MILLISECONDS_IN_SECOND div 100, Srv, {'stop', Call}),
-    'ok'.
-
 -spec new_request(pid(), kz_term:ne_binary(), http_method()) -> 'ok'.
 new_request(Srv, Uri, Method) ->
     gen_listener:cast(Srv, {'request', Uri, Method}).
@@ -254,12 +249,12 @@ handle_cast({'stop_call', Call}
            ,#state{cdr_uri='undefined'}=State
            ) ->
     lager:debug("no cdr callback, terminating call"),
-    kapps_call_command:hangup(Call),
+    kapps_call_command:queued_hangup(Call),
     {'stop', 'normal', State};
 
 handle_cast({'stop_call', Call}, #state{}=State) ->
     lager:debug("requested to stop while CDR uri is defined, hanging call waiting for cdrs before going down, hard stopping in 30 seconds"),
-    kapps_call_command:hangup(Call),
+    kapps_call_command:queued_hangup(Call),
 
     %% hard stop if hangup or cdr was unsuccessful.
     erlang:send_after(30 * ?MILLISECONDS_IN_SECOND, self(), {'hard_stop', Call}),
@@ -540,8 +535,6 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
     case process_resp(RequesterQ, Call, CT, RespBody) of
         {'stop_call', Call1} ->
             stop_call_after(Srv, Call1);
-        {'stop_with_response', Call1} ->
-            stop_with_response(Srv, Call1);
         {'usurp', _Call1} ->
             usurp_executor(Srv);
         {'request', Call1} ->
@@ -554,7 +547,6 @@ handle_resp(RequesterQ, Call, CT, <<_/binary>> = RespBody, AMQPConsumer) ->
 
 -spec process_resp(kz_term:api_binary(), kapps_call:call(), kz_term:api_ne_binary(), binary()) ->
           {'stop_call', kapps_call:call()} |
-          {'stop_with_response', kapps_call:call()} |
           {'request', kapps_call:call()} |
           {'usurp', kapps_call:call()}.
 process_resp(_, Call, _, <<>>) ->
@@ -566,9 +558,6 @@ process_resp(RequesterQ, Call, CT, RespBody) ->
         {'stop', Call1} ->
             lager:debug("translator says stop"),
             {'stop_call', Call1};
-        {'stop_with_response', _Call1}=Stop ->
-            lager:debug("translator says stop because it already hungup the call"),
-            Stop;
         {'ok', Call1} ->
             lager:debug("translator rendered successfully, stopping pivot call"),
             {'stop_call', Call1};
@@ -715,7 +704,7 @@ publish_failed_or_hangup(Call, RequesterQ) ->
     end.
 
 -spec maybe_hangup(kapps_call:call()) -> 'ok'.
-maybe_hangup(Call) -> kapps_call_command:hangup(Call).
+maybe_hangup(Call) -> kapps_call_command:queued_hangup(Call).
 
 -spec publish_failed(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
 publish_failed(Call, RequesterQ) ->
