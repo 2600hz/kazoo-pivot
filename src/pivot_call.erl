@@ -325,8 +325,13 @@ handle_cast(_Req, State) ->
 %%------------------------------------------------------------------------------
 -spec handle_info(any(), state()) -> {'noreply', state()} |
           {'stop', any(), state()}.
-handle_info({'hard_stop', _Call}, State) ->
-    {'stop', 'normal', State};
+handle_info({'hard_stop', _Call}, #state{response_pid = Pid} = State) ->
+    case is_process_alive(Pid) of
+        'true' ->
+            {'noreply', State};
+        'false' ->
+            {'stop', 'normal', State}
+    end;
 handle_info({'http', {ReqId, 'stream_start', Hdrs}}
            ,#state{request_id=ReqId}=State
            ) ->
