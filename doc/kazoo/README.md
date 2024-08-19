@@ -4,7 +4,7 @@ Sometimes Kazoo's callflow builder doesn't match your needs, integrate with your
 
 By routing a call to a Pivot callflow action, Kazoo will make an HTTP request to your web server asking for the callflow to process for that specific call (versus the one-size-fits-all approach in the normal callflow builder).
 
-This could be best illustrated with an example, no?
+This could be best illustrated with an example, shall we?
 
 ## Building Time-based routing
 

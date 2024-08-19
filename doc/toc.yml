@@ -30,3 +30,4 @@
   - '<Reject>': 'doc/twiml/reject.md'
   - '<Say>': 'doc/twiml/say.md'
   # - 'doc/twiml/set.md'
+  - 'doc/twiml/switchover.md'
