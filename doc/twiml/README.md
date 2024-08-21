@@ -6,7 +6,7 @@ To use this Pivot TwiML a developer server must respond to Pivot requests with `
 application/xml` HTTP header and a valid TwiML document.  
 
 Pivot TwiML is an xml scripting language for routing and controlling calls in Kazoo. 
-Documents begin with an XML declaration and have one root element, `<response>`.  
+Documents begin with an XML declaration and have one root element, `<Response>`.  
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
