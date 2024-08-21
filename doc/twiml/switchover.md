@@ -2,7 +2,7 @@
 
 This tutorial shows you how to migrate an existing App from Twilio to Kazoo. Because [Pivot](https://docs.2600hz.com/git/2600hz/pivot/doc/README.md) can render several common verbs from TwiML, it may be as simple as routing numbers in Kazoo to your existing TwiML servers, though Twilio apps built with Twilio Studio cannot be migrated using Pivot.
 
-This tutorial also expects you to have a Kazoo account setup already. If you do not have a Kazoo account, contact us! This guide additionally does not cover configuring carriers or migrating numbers between carriers.
+This tutorial also expects you to have a Kazoo account setup already. If you do not have a Kazoo account, contact us! This guide additionally does not cover configuring carriers, migrating numbers between carriers, setting up storage plans for recording, and other Kazoo configuration tasks.
 
 ## Migrating from Twilio SDK
 
