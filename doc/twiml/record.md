@@ -43,7 +43,7 @@ Pivot will stop recording after `maxLength` seconds and complete rendering `<Rec
 ### `method`
 
 Pivot sets the HTTP request method for the [`action`](#action) request, either `POST` or `GET`. 
-Pivot expects a response with more call instructions. See [Requests](./../requests.md) for 
+Pivot expects a response with more call instructions. See [Requests](./request_params.md) for 
 information about the request and response formats. 
 
 Defaults to `GET`.  
@@ -52,12 +52,12 @@ Defaults to `GET`.
 
 If set to true, Pivot will play a beep as recording starts. 
 
-Defaults to `true`.  
+Defaults to `true`.
 
 ### `timeout`
 
 Pivot will record silence on the line for `timeout` seconds before ending the recording. 
 `<Record>` can still continue after a recording timeout. 
 
-`timeout="0"` will disable timeout.  
+`timeout="0"` will disable timeout.
 

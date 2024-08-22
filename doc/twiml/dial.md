@@ -4,7 +4,7 @@ Connect callers to new telephone endpoints
 
 ## Overview
 
-`<Dial>` will connect an active call to another [endpoint](applications/crossbar/doc/endpoints.md). 
+`<Dial>` will connect an active call to another [endpoint](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/doc/endpoints.md). 
 [Supported party types](#Nesting-Nouns)
 
 ```xml
@@ -58,7 +58,7 @@ provided, and Pivot will attempt to execute the next term in the document.
 ### `method`
 
 Sets the HTTP request method for the [`action`](#action) request, either `POST` or `GET`. Pivot 
-expects a response with more call instructions. See [Requests](./../requests.md) for information 
+expects a response with more call instructions. See [Requests](./requests.md) for information 
 about the request and response formats.  
 Defaults to `GET`.  
 

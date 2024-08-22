@@ -6,7 +6,7 @@
 `<Dial>` will bridge the call to the provided Kazoo `<Device>`
 
 `<Device>` expects a valid 32 character alphanumeric device ID configured in the Kazoo account, see 
-the [Devices](https://docs.2600hz.com/git/2600hz/crossbar/doc/devices.md) article for more 
+the [Devices](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/doc/devices.md) article for more 
 information.
 
 ## Attributes

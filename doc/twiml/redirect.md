@@ -19,6 +19,6 @@ continue execution of the current document after a `<Redirect>`, further terms w
 ### `method`
 
 sets the HTTP request method for the `<Redirect>` request, either `POST` or `GET`. Pivot 
-expects a response with more call instructions. See [Requests](./../requests.md) for information 
+expects a response with more call instructions. See [Requests](./request_params.md) for information 
 about the request and response formats.  
 

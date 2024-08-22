@@ -1,6 +1,6 @@
 # Switching from Twilio
 
-This tutorial shows you how to migrate an existing App from Twilio to Kazoo. Because [Pivot](https://docs.2600hz.com/git/2600hz/pivot/doc/README.md) can render several common verbs from TwiML, it may be as simple as routing numbers in Kazoo to your existing TwiML servers, though Twilio apps built with Twilio Studio cannot be migrated using Pivot.
+This tutorial shows you how to migrate an existing App from Twilio to Kazoo. Because [Pivot](https://docs.2600hz.com/git/2600hz/kazoo-pivot/doc/README.md) can render several common verbs from TwiML, it may be as simple as routing numbers in Kazoo to your existing TwiML servers, though Twilio apps built with Twilio Studio cannot be migrated using Pivot.
 
 This tutorial also expects you to have a Kazoo account setup already. If you do not have a Kazoo account, contact us! This guide additionally does not cover configuring carriers, migrating numbers between carriers, setting up storage plans for recording, and other Kazoo configuration tasks.
 
@@ -10,7 +10,7 @@ If you built your application with Twilio's SDK or are otherwise hosting TwiML y
 
 Please note that Pivot will skip unsupported TwiML terms. See our [Pivot Documentation](https://docs.2600hz.com/kazoo/pivot/) for supported terms. Some TwiML terms can be swapped for 2600Hz Callflow actions with similar behaviors, demonstrated in the [IVR Tutorial](#ivr-demo).
 
-You may also wish to review Pivot’s [request format.](https://docs.2600hz.com/git/2600hz/pivot/doc/requests.md)
+You may also wish to review Pivot’s [request format.](https://docs.2600hz.com/git/2600hz/kazoo-pivot/doc/requests.md)
 
 ### Pivot App
 
@@ -38,7 +38,7 @@ Once your number is routed to this Callflow, if you’re using supported TwiML t
 
 ### Configure Routing with the Callflows API
 
-The Callflows API is documented more completely [here](https://docs.2600hz.com/git/2600hz/crossbar/doc/callflows.md), including ways to route multiple numbers at once. This is a brief guide on using that API. A new Callflow can be created with this Kazoo API endpoint:
+The Callflows API is documented more completely [here](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/doc/callflows.md), including ways to route multiple numbers at once. This is a brief guide on using that API. A new Callflow can be created with this Kazoo API endpoint:
 
 ```bash
 curl -v -X PUT \
