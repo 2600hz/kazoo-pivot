@@ -7,10 +7,10 @@ Record and store calls
 Pivot will begin recording calls when this term is rendered.    
 
 2600Hz will only store call recordings if the account has an appropriate 
-[storage plan](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/storage.md) setup. 
+[storage plan](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/doc/storage.md) setup. 
 For accounts without storage for recordings, Pivot can send recordings to a developer server 
 using the `recordingUrl` attribute. To retrieve calls stored by 2600Hz, see 
-[Kazoo API Call Recordings](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/recordings.md}).
+[Kazoo API Call Recordings](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/doc/recordings.md).
 
 ## Attributes
 
