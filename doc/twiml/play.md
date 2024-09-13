@@ -28,7 +28,7 @@ character will halt playback.
 
 If `prompt` is set to a valid media URL or handle, Pivot will playback that media to callers 
 before disconnecting the line without answering the call. 
-See [Media](https://docs.2600hz.com/git/2600hz/crossbar/doc/media.md) in Kazoo for information 
+See [Media](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/doc/media.md) in Kazoo for information 
 on uploading and using media files in Kazoo.
 
 ## Nesting
