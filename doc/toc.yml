@@ -1,6 +1,6 @@
 - '!q:doc/README.md'
 - 'doc/requests.md'
-- 'doc/twiml/switchover.md'
+- '!f:doc/twiml/switchover.md'
 
 - Kazoo Callflow JSON Response Format:
   - '!f:doc/kazoo/README.md'
