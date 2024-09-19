@@ -1,5 +1,7 @@
 - '!q:doc/README.md'
 - 'doc/requests.md'
+- 'doc/twiml/switchover.md'
+
 - Kazoo Callflow JSON Response Format:
   - '!f:doc/kazoo/README.md'
   - 'doc/kazoo/bridging.md'
@@ -30,4 +32,3 @@
   - '<Reject>': 'doc/twiml/reject.md'
   - '<Say>': 'doc/twiml/say.md'
   # - 'doc/twiml/set.md'
-  - 'doc/twiml/switchover.md'
