@@ -723,7 +723,7 @@ publish_failed(Call, RequesterQ) ->
 %% after 10ms, send stop_call to pivot_call process,
 %% to avoid race condition between stop_call and DOWN message
 %% of handle_resp process when it's done its task
--spec stop_call_after(kz_term:pid(), kapps_call:call()) -> {'ok', timer:tref()} | {'error', any()}.
+-spec stop_call_after(pid(), kapps_call:call()) -> {'ok', timer:tref()} | {'error', any()}.
 stop_call_after(Srv, Call) ->
     timer:apply_after(?MILLISECONDS_IN_SECOND div 100
                      ,?MODULE
