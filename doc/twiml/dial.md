@@ -27,15 +27,17 @@ If you are using BYOC, make sure Kazoo is configured to use your carrier.
 
 ## Attributes
 
-| Name                            | Values Description             | Default value     |
-|---------------------------------|--------------------------------|-------------------|
-| [`action`](#action)             | URL                            | none              |
-| [`callerId`](#callerId)         | any string                     | from caller       |
-| [`hangupOnStar`](#hangupOnStar) | `true` \| `false`              | `false`           |
-| [`method`](#method)             | `GET` \| `POST`                | `GET`             |
-| [`timeLimit`](#timeLimit)       | any positive integer (seconds) | 14400 (4 hours)   |
+| Name                            | Values Description             | Default value    |
+|---------------------------------|--------------------------------|------------------|
+| [`action`](#action)             | URL                            | none             |
+| [`callerId`](#callerId)         | any string                     | from caller      |
+| [`hangupOnStar`](#hangupOnStar) | `true` \| `false`              | `false`          |
+| [`method`](#method)             | `GET` \| `POST`                | `GET`            |
+| [`timeLimit`](#timeLimit)       | any positive integer (seconds) | 14400 (4 hours)  |
 | [`timeout`](#timeout)           | any positive integer (seconds) | [30](#timelimit) |
-
+| `record`                        |                                |                  |
+| `recordingUrl`                  |                                |                  |
+| `recordStoreMethod`             |                                |                  |
 
 
 ### `action`
@@ -75,6 +77,41 @@ Pivot always adds an additional five seconds to `timeout`. for example `timeout`
 configured to 0 seconds, but because of this additional buffer, the true minimum time Pivot will 
 wait for an answer is 5 seconds. The default value for the `timeout` parameter is 30 seconds, so 
 the true default time Pivot waits on an answer by default is 35 seconds.
+
+### `record`
+
+When set, record both legs of a call during the `<Dial>`. Recording can be either mono or stereo. 
+Currently conferences cannot be recorded using this attribute.  
+
+in dual channel recording, each leg uses a separate channel in the recording. This is the default across
+Kazoo and is elsewhere referred to as stereo recording. There are two options for dual channel 
+recording:
+- `record-from-answer-dual`, which is equivalent to `record_on_answer` in Callflow and begins recording when
+the call is answered 
+- `record-from-ringing-dual`, which is equivalent to `record_on_bridge` in Callflow and begins recording
+as soon as the line starts ringing
+
+For compatibility, mono recording with Pivot Twiml terms is also available.
+- `record-from-answer`, which is equivalent to `record_on_answer` in Callflow and begins recording when
+the call is answered 
+- `record-from-ringing`, which is equivalent to `record_on_bridge` in Callflow and begins recording
+as soon as the line starts ringing.
+
+2600Hz will only store call recordings if the account has an appropriate 
+[storage plan](https://docs.2600hz.com/git/2600hz/crossbar/storage.md) setup. 
+For accounts without storage for recordings, Pivot can send recordings to a developer server 
+using the `recordingUrl` attribute. To retrieve calls stored by 2600Hz, see 
+[Kazoo API Call Recordings](https://docs.2600hz.com/git/2600hz/crossbar/recordings.md}).
+
+### `recordingUrl`
+
+Kazoo will attempt to send recordings to this URL plus a generated media name when set. For example, when 
+`recordingUrl=myrecordings.com/pivot`, Kazoo will send a recording to `myrecordings.com/pivot/\[mediaName]`
+
+### `recordStoreMethod`
+
+Method to use when sending media to `recordingUrl`.
+
 
 ## Nesting Nouns
 

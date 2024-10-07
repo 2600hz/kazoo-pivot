@@ -1,10 +1,11 @@
-# \<Record>
+# \<Record>  
 
 Record and store calls  
 
-## Overview
+## Overview  
 
-Pivot will begin recording calls when this term is rendered.    
+Pivot will begin recording calls when this term is rendered. Pivot will not render additional 
+terms until `<Record>` completes.
 
 2600Hz will only store call recordings if the account has an appropriate 
 [storage plan](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/doc/storage.md) setup. 
@@ -12,17 +13,18 @@ For accounts without storage for recordings, Pivot can send recordings to a deve
 using the `recordingUrl` attribute. To retrieve calls stored by 2600Hz, see 
 [Kazoo API Call Recordings](https://docs.2600hz.com/git/2600hz/kazoo-crossbar/doc/recordings.md).
 
-## Attributes
+## Attributes  
 
-| Name                            | Values Description                            | Default value  |
-|---------------------------------|-----------------------------------------------|----------------|
-| [`finishOnKey`](#finishOnKey)   | Any DTMF character                            | `0123456789*#` |
-| [`method`](#method)             | `GET` \| `POST`                               | `GET`          |
-| [`playBeep`](#playBeep)         | `true` \|`false`                              | `true`         |
-| [`maxLength`](#maxLength)       | any positive integer (seconds)                | 3600 (1 hour)  |
-| [`timeout`](#timeout)           | any positive integer including zero (seconds) | 5              |
-| [`action`](#action)             | URL                                           | none           |
-| [`recordingUrl`](#recordingUrl) | URL                                           | none           |
+| Name                                 | Values Description                            | Default value  |
+|--------------------------------------|-----------------------------------------------|----------------|
+| [`finishOnKey`](#finishOnKey)        | Any DTMF character                            | `0123456789*#` |
+| [`method`](#method)                  | `GET` \| `POST`                               | `GET`          |
+| [`playBeep`](#playBeep)              | `true` \|`false`                              | `true`         |
+| [`maxLength`](#maxLength)            | any positive integer (seconds)                | 3600 (1 hour)  |
+| [`timeout`](#timeout)                | any positive integer including zero (seconds) | 5              |
+| [`action`](#action)                  | URL                                           | none           |
+| [`recordingUrl`](#recordingUrl)      | URL                                           | none           |
+| [`recordStoreMethod`](#recordingUrl) | `PUT` \| `POST` \| `PATCH`                    | `PUT`          |
 
 ### `action`  
 
@@ -61,3 +63,11 @@ Pivot will record silence on the line for `timeout` seconds before ending the re
 
 `timeout="0"` will disable timeout.
 
+### `recordingUrl`
+
+Kazoo will attempt to send recordings to this URL plus a generated media name when set. For example, when 
+`recordingUrl=myrecordings.com/pivot`, Kazoo will send a recording to `myrecordings.com/pivot/\[mediaName]`
+
+### `recordStoreMethod`
+
+Method to use when sending media to `recordingUrl`.
