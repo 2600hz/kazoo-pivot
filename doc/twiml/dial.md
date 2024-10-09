@@ -27,17 +27,17 @@ If you are using BYOC, make sure Kazoo is configured to use your carrier.
 
 ## Attributes
 
-| Name                            | Values Description             | Default value    |
-|---------------------------------|--------------------------------|------------------|
-| [`action`](#action)             | URL                            | none             |
-| [`callerId`](#callerId)         | any string                     | from caller      |
-| [`hangupOnStar`](#hangupOnStar) | `true` \| `false`              | `false`          |
-| [`method`](#method)             | `GET` \| `POST`                | `GET`            |
-| [`timeLimit`](#timeLimit)       | any positive integer (seconds) | 14400 (4 hours)  |
-| [`timeout`](#timeout)           | any positive integer (seconds) | [30](#timelimit) |
-| `record`                        |                                |                  |
-| `recordingUrl`                  |                                |                  |
-| `recordStoreMethod`             |                                |                  |
+| Name                                 | Values Description                                                                                                       | Default value    |
+|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------|
+| [`action`](#action)                  | URL                                                                                                                      | none             |
+| [`callerId`](#callerId)              | any string                                                                                                               | from caller      |
+| [`hangupOnStar`](#hangupOnStar)      | `true` \| `false`                                                                                                        | `false`          |
+| [`method`](#method)                  | `GET` \| `POST`                                                                                                          | `GET`            |
+| [`timeLimit`](#timeLimit)            | any positive integer (seconds)                                                                                           | 14400 (4 hours)  |
+| [`timeout`](#timeout)                | any positive integer (seconds)                                                                                           | [30](#timelimit) |
+| [`record`](#record)                  | `record-from-answer`\| `record-from-ringing`\| `record-from-answer-dual`\| `record-from-ringing-dual`\| `true`\| `false` | none             |
+| [`recordingUrl`](#recordingUrl)      | URL                                                                                                                      | none             |
+| [`recordStoreMethod`](#recordingUrl) | `PUT` \| `POST` \| `PATCH`                                                                                               | `PUT`            |
 
 
 ### `action`
@@ -91,11 +91,13 @@ the call is answered
 - `record-from-ringing-dual`, which is equivalent to `record_on_bridge` in Callflow and begins recording
 as soon as the line starts ringing
 
-For compatibility, mono recording with Pivot Twiml terms is also available.
+For compatibility, mono recording with Pivot TwiML terms is also available.
 - `record-from-answer`, which is equivalent to `record_on_answer` in Callflow and begins recording when
-the call is answered 
+the call is answered. `true` is an alias for `record-from-answer`
 - `record-from-ringing`, which is equivalent to `record_on_bridge` in Callflow and begins recording
 as soon as the line starts ringing.
+
+Any other value of `record` will not record the call, including `false` and `do-not-record`.  
 
 2600Hz will only store call recordings if the account has an appropriate 
 [storage plan](https://docs.2600hz.com/git/2600hz/crossbar/storage.md) setup. 
