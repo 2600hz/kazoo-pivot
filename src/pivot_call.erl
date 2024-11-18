@@ -40,6 +40,15 @@
 
 -type http_method() :: 'get' | 'post'.
 
+-record(stream, {id = 'undefined' :: kz_term:api_ne_binary()
+                ,name :: kz_term:ne_binary()
+                ,pid :: kz_term:api_pid()
+                ,ref :: kz_term:api_reference()
+                ,req_ref :: kz_term:api_reference()
+                ,node :: kz_term:api_atom()
+                ,start_timeout_ref :: kz_term:api_reference()
+                }).
+
 -record(state, {voice_uri :: kz_term:api_ne_binary()
                ,cdr_uri :: kz_term:api_ne_binary()
                ,request_format = <<"kazoo">> :: kz_term:ne_binary()
@@ -59,8 +68,8 @@
                ,response_ref :: kz_term:api_reference() %% monitor ref for the pid
                ,debug = 'false' :: boolean()
                ,requester_queue :: kz_term:api_ne_binary()
+               ,streams = [] :: [#stream{}]
                }).
-
 -type state() :: #state{}.
 
 %%%=============================================================================
@@ -75,13 +84,19 @@
 start_link(Call, JObj) ->
     CallId = kapps_call:call_id(Call),
 
+    StreamBinding = {'stream', [{'account_id', kapps_call:account_id(Call)}
+                               ,{'call_id', kapps_call:call_id(Call)}
+                               ]
+                    },
     Bindings = {'bindings', [{'self', []}
                             ,{'call', [{'callid', CallId}, 'pooled']}
+                            ,{'pivot', [{'restrict_to', [StreamBinding]}]}
                             ]},
     Responders = {'responders', [{{?MODULE, 'maybe_relay_event'}
                                  ,[{<<"conference">>, <<"event">>}
                                   ,{<<"resource">>, <<"offnet_resp">>}
                                   ,{<<"call_event">>, <<"*">>}
+                                  ,{<<"pivot">>, <<"*">>}
                                   ]
                                  }
                                 ]},
@@ -108,16 +123,38 @@ updated_call(Srv, Call) -> gen_listener:call(Srv, {'updated_call', Call}).
 -spec usurp_executor(pid()) -> 'ok'.
 usurp_executor(Srv) -> gen_listener:cast(Srv, 'usurp').
 
--spec maybe_relay_event(kz_json:object(), kz_term:proplist()) -> 'ok'.
+-spec maybe_relay_event(kz_json:object(), kz_term:proplist() | state()) -> 'ok'.
+maybe_relay_event(JObj, #state{response_pid=Pid
+                              ,response_event_handlers=Pids
+                              ,call_id = CallId
+                              ,streams = Streams
+                              }) ->
+    Props = [{'pid', Pid}
+            ,{'pids', Pids}
+            ,{'call_id', CallId}
+            ,{'streams', Streams}
+            ],
+    maybe_relay_event(JObj, Props);
 maybe_relay_event(JObj, Props) ->
+    ServerPid = props:get_value('server', Props),
     Pids = response_handler_pids(Props),
     CallId = props:get_value('call_id', Props),
     case {kz_api:event_type(JObj), kz_call_event:call_id(JObj)} of
         {{<<"call_event">>, <<"CHANNEL_DESTROY">>}, CallId} ->
             lager:debug("caller channel destroyed, saving cdrs..."),
             _ = [kapps_call_command:relay_event(P, JObj) || P <- Pids],
-            Pid = props:get_value('server', Props),
-            gen_listener:cast(Pid, {'cdr', JObj});
+            gen_listener:cast(ServerPid, {'cdr', JObj});
+        {{<<"call_event">> = _Cat, <<"CHANNEL_EXECUTE_COMPLETE">> = _Evt}, CallId} ->
+            case kz_call_event:application_name(JObj) of
+                <<"stream">> ->
+                    %% TODO: can we extract stream name from Raw-Application-Data?
+                    Id = kz_call_event:application_response(JObj),
+                    lager:debug("freeswitch connected to proxy for stream ~s", [Id]),
+                    gen_listener:cast(ServerPid, {'set_stream_id', Id});
+                _App ->
+                    lager:debug("relaying event ~s/~s to ~p (original call-id ~s)", [_Cat, _Evt, Pids, CallId]),
+                    [kapps_call_command:relay_event(P, JObj) || P <- Pids]
+            end;
         {{_Cat, _Evt}, _EventCallId} ->
             lager:debug("relaying event ~s/~s to ~p (original call-id ~s)", [_Cat, _Evt, Pids, CallId]),
             [kapps_call_command:relay_event(P, JObj) || P <- Pids]
@@ -126,10 +163,16 @@ maybe_relay_event(JObj, Props) ->
 -spec response_handler_pids(kz_term:proplist()) -> [pid()].
 response_handler_pids(Props) ->
     Pid = props:get_value('pid', Props),
+    HandlerPids = [Pid | get_stream_pids(Props)],
     case props:get_value('pids', Props) of
-        [_|_]=Pids -> [P || P <- [Pid | Pids], is_pid(P)];
-        _ -> [P || P <- [Pid], is_pid(P)]
+        [_|_]=Pids -> [P || P <- HandlerPids ++ Pids, is_pid(P)];
+        _ -> [P || P <- HandlerPids, is_pid(P)]
     end.
+
+-spec get_stream_pids(kz_term:proplist()) -> [pid()].
+get_stream_pids(Props) ->
+    %% TODO: handle me rpc node?
+    [Pid || #stream{pid = Pid} <- props:get_value('streams', Props, []), is_pid(Pid)].
 
 %%%=============================================================================
 %%% gen_server callbacks
@@ -246,6 +289,26 @@ handle_cast({'gen_listener', {'created_queue', Q}}
     new_request(self(), VoiceUri, Method, BaseParams),
     {'noreply', State#state{call=kapps_call:set_controller_queue(Q, Call)}};
 
+handle_cast({'stream_start', From, Data}, State) ->
+    NewState = maybe_limit_stream(Data, From, State),
+    {'noreply', NewState};
+handle_cast({'stream_stop', Id, Name}, State) ->
+    NewState = stream_stop(Id, Name, State),
+    {'noreply', NewState};
+
+handle_cast({'set_stream_id', Id}, #state{streams=Streams, call=Call}=State) ->
+    case lists:partition(fun(#stream{start_timeout_ref=TRef}) when is_reference(TRef) -> 'true' end, Streams) of
+        {[], _} ->
+            {'noreply', State};
+        {[#stream{start_timeout_ref = TRef, pid='undefined'}=Stream|_], NewStreams} ->
+            _ = erlang:cancel_timer(TRef),
+            {'noreply', State#state{streams=[Stream#stream{id=Id, start_timeout_ref='undefined'} | NewStreams]}};
+        {[#stream{start_timeout_ref = TRef, pid=From, req_ref=Ref}=Stream|_], NewStreams} ->
+            _ = erlang:cancel_timer(TRef),
+            From ! {'get_call', From, Ref, {Call, Id}},
+            {'noreply', State#state{streams=[Stream#stream{id=Id, start_timeout_ref='undefined', req_ref='undefined'} | NewStreams]}}
+    end;
+
 handle_cast({'stop_call', Call}
            ,#state{cdr_uri='undefined'}=State
            ) ->
@@ -275,7 +338,7 @@ handle_cast({'cdr', JObj}
                   ,debug=Debug
                   }=State
            ) ->
-    lager:debug("sending cdr to cdr_uri ~s", [Url]),
+    lager:debug("sending cdr to cdr_uri ~s", [kz_log:redactor(Url)]),
 
     JObj1 = kz_json:delete_key(<<"Custom-Channel-Vars">>, JObj),
     Body =  kz_http_util:json_to_querystring(kz_api:remove_defaults(JObj1)),
@@ -327,6 +390,44 @@ handle_cast(_Req, State) ->
           {'stop', any(), state()}.
 handle_info({'hard_stop', _Call}, State) ->
     {'stop', 'normal', State};
+handle_info({'get_call', From, Ref, Node, Name}, #state{streams=Streams, call=Call}=State) ->
+    %% TODO: handle me rpc node?
+    lager:debug("getting stream '~ts' info for proxy at ~p", [Name, From]),
+    case lists:partition(fun(#stream{name = N}) -> N =:= Name end, Streams) of
+        {[], _} ->
+            From ! {'get_call', From, Ref, 'not_found'},
+            {'noreply', State};
+        {[#stream{id='undefined'}=Stream|_], NewStreams} ->
+            lager:debug("still waiting for stream '~s' id from freeswitch", [Name]),
+            From ! {'get_call', From, Ref, 'no_id'},
+            Updated = Stream#stream{pid=From
+                                   ,ref=erlang:monitor('process', From)
+                                   ,req_ref=Ref
+                                   ,node=Node
+                                   },
+            {'noreply', State#state{streams=[Updated | NewStreams]}};
+        {[#stream{id=Id}=Stream|_], NewStreams} ->
+            From ! {'get_call', From, Ref, {Call, Id}},
+            Updated = Stream#stream{pid=From
+                                   ,ref=erlang:monitor('process', From)
+                                   ,node=Node
+                                   },
+            {'noreply', State#state{streams=[Updated | NewStreams]}}
+    end;
+handle_info({'stream_start', Name, 'timeout'}, #state{streams=Streams}=State) ->
+    Data = kz_json:from_list([{<<"name">>, Name}]),
+    case lists:partition(fun(#stream{name=N}) when N =:= Name -> 'true' end, Streams) of
+        {[], _} ->
+            {'noreply', State};
+        {[#stream{pid=Pid}=Stream|_], NewStreams} when is_pid(Pid) ->
+            lager:debug("timeout waiting for stream-id for ~s from freeswitch", [Name]),
+            send_stream_error(Data, <<"internal connection timeout">>, State),
+            {'noreply', State#state{streams=[Stream#stream{start_timeout_ref='undefined'} | NewStreams]}};
+        {_, NewStreams} ->
+            lager:debug("timeout waiting for stream-id for ~s from freeswitch", [Name]),
+            {'noreply', State#state{streams=NewStreams}}
+    end;
+
 handle_info({'http', {ReqId, 'stream_start', Hdrs}}
            ,#state{request_id=ReqId}=State
            ) ->
@@ -428,9 +529,31 @@ handle_info({'DOWN', Ref, 'process', Pid, Reason}
     lager:info("response pid ~p(~p) down: ~p", [Pid, Ref, Reason]),
     publish_failed_or_hangup(Call, RequesterQ),
     {'stop', 'normal', State#state{response_pid = 'undefined', response_ref = 'undefined'}};
+handle_info({'DOWN', Ref, 'process', Pid, 'normal'}=_Info, #state{streams=Streams}=State) ->
+    case lists:partition(fun(Stream) -> is_stream_process(Stream, Pid, Ref) end, Streams) of
+        {[], _} ->
+            lager:debug("unhandled message: ~p", [_Info]),
+            {'noreply', State};
+        {[#stream{id=Id}|_], Ss} ->
+            lager:debug("stream ~s proxy process ~p(~p) is down normally", [Id, Pid, Ref]),
+            {'noreply', State#state{streams=Ss}}
+    end;
+handle_info({'DOWN', Ref, 'process', Pid, Reason}=_Info, #state{streams=Streams}=State) ->
+    case lists:partition(fun(Stream) -> is_stream_process(Stream, Pid, Ref) end, Streams) of
+        {[], _} ->
+            lager:debug("unhandled message: ~p", [_Info]),
+            {'noreply', State};
+        {[#stream{name=Id}|_], Ss} ->
+            lager:debug("stream ~s proxy process ~p died unexpectedly: ~p", [Id, Pid, Reason]),
+            {'noreply', State#state{streams=Ss}}
+    end;
+
 handle_info(_Info, State) ->
     lager:debug("unhandled message: ~p", [_Info]),
     {'noreply', State}.
+
+is_stream_process(#stream{pid=Pid, ref=Ref}, Pid, Ref) -> 'true';
+is_stream_process(_, _, _) -> 'false'.
 
 %%------------------------------------------------------------------------------
 %% @doc Handling messaging bus events
@@ -440,11 +563,13 @@ handle_info(_Info, State) ->
 handle_event(_JObj, #state{response_pid=Pid
                           ,response_event_handlers=Pids
                           ,call_id = CallId
+                          ,streams = Streams
                           }
             ) ->
     {'reply', [{'pid', Pid}
               ,{'pids', Pids}
               ,{'call_id', CallId}
+              ,{'streams', Streams}
               ]}.
 
 %%------------------------------------------------------------------------------
@@ -691,11 +816,11 @@ format_request(Params, <<"form">>) ->
 format_request(Params, <<"json">>) ->
     kz_json:encode(Params).
 
--spec req_content_type(kz_term:ne_binary()) -> list().
+-spec req_content_type(kz_term:ne_binary()) -> kz_term:ne_binary().
 req_content_type(<<"form">>) ->
-    "application/x-www-form-urlencoded";
+    <<"application/x-www-form-urlencoded">>;
 req_content_type(<<"json">>) ->
-    "application/json".
+    <<"application/json">>.
 
 -spec is_first_pivot_request(kapps_call:call()) -> boolean().
 is_first_pivot_request(Call) ->
@@ -729,3 +854,111 @@ stop_call_after(Srv, Call) ->
                      ,?MODULE
                      ,'stop_call'
                      ,[Srv, Call]).
+
+-spec maybe_limit_stream(kz_json:object(), pid(), state()) -> state().
+maybe_limit_stream(Data, From, #state{streams=[]}=State) ->
+    handle_stream_start(Data, From, State);
+maybe_limit_stream(Data, From, #state{streams=Streams}=State) ->
+    Length = length(Streams),
+    case kz_json:get_ne_binary_value(<<"type">>, Data, <<"unidirectional">>) of
+        <<"unidirectional">> when Length < 4 ->
+            lager:debug("reached to maximum supported stream per call"),
+            send_stream_error(Data, <<"max unidirectional limit reached">>, State),
+            State;
+        <<"bidirectional">> when Length < 1 ->
+            lager:debug("reached to maximum supported stream per call"),
+            send_stream_error(Data, <<"max bidirectional limit reached">>, State),
+            State;
+        <<"raw">> ->
+            lager:debug("reached to maximum supported stream per call"),
+            send_stream_error(Data, <<"max unidirectional limit reached">>, State),
+            State;
+        _ ->
+            handle_stream_start(Data, From, State)
+    end.
+
+-spec stream_stop(kz_term:api_ne_binary(), kz_term:api_ne_binary(), state()) -> state().
+stream_stop('undefined', 'undefined', #state{call=Call}=State) ->
+    kapps_call_command:stream_stop(Call),
+    State;
+stream_stop('undefined', Name, #state{call=Call, streams=Streams}=State) ->
+    case [Stream || #stream{name=N}=Stream <- Streams, N =:= Name] of
+        [] ->
+            lager:debug("stream with name '~s' not found", [Name]),
+            State;
+        [#stream{id=Id}|_] ->
+            kapps_call_command:stream_stop(Id, Call),
+            State
+    end;
+stream_stop(Id, _, #state{call=Call, streams=Streams}=State) ->
+    case [Stream || #stream{id=I}=Stream <- Streams, I =:= Id] of
+        [] ->
+            lager:debug("stream with id '~s' not found", [Id]),
+            State;
+        [#stream{}|_] ->
+            kapps_call_command:stream_stop(Id, Call),
+            State
+    end.
+
+-spec handle_stream_start(kz_json:object(), pid(), state()) -> state().
+handle_stream_start(Data, From, #state{streams=Streams}=State) ->
+    Name = kz_json:get_ne_binary_value(<<"name">>, Data),
+    case lists:any(fun(#stream{name=N}) -> N =:= Name end, Streams) of
+        'false' ->
+            start_stream(Name, Data, From, State);
+        'true' ->
+            lager:debug("stream with name '~s' is already exists", [Name]),
+            send_stream_error(Data, <<"stream name already exists">>, State),
+            State
+    end.
+
+-spec start_stream(kz_term:ne_binary(), kz_json:object(), pid(), state()) -> state().
+start_stream(Name, Data, RespPid, #state{call=Call, streams=Streams}=State) ->
+    ProxyUrl = pivot_piper_init:websocket_proxy_url(kapps_call:account_id(Call), kapps_call:call_id(Call)),
+    AudioTracks = get_stream_tracks(Data),
+    AudioMix = get_stream_mix(Data),
+    SampleRate = kz_json:get_ne_binary_value(<<"sample_rate">>, Data, <<"8k">>),
+    Payload = stream_payload(Name, Data, self(), RespPid, State),
+
+    lager:debug("sending stream command for ~s for proxy ~s", [Name, kz_log:redactor(ProxyUrl)]),
+
+    kapps_call_command:stream_start(ProxyUrl, AudioTracks, AudioMix, SampleRate, Payload, Call),
+    Stream = #stream{name = Name
+                    ,start_timeout_ref = erlang:send_after(5 * ?MILLISECONDS_IN_SECOND, self(), {'stream_start', Name, 'timeout'})
+                    },
+    State#state{streams=[Stream|Streams]}.
+
+-spec get_stream_tracks(kz_json:object()) -> kz_term:ne_binary().
+get_stream_tracks(Data) ->
+    case kz_json:get_ne_binary_value(<<"track">>, Data, <<"inbound_track">>) of
+        <<"outbound_track">> -> <<"outbound">>;
+        <<"both_tracks">> -> <<"both">>;
+        _ -> <<"inbound">>
+    end.
+
+-spec get_stream_mix(kz_json:object()) -> kz_term:ne_binary().
+get_stream_mix(Data) ->
+    case kz_json:get_ne_binary_value(<<"mix">>, Data, <<"mono">>) of
+        <<"stereo">> -> <<"stereo">>;
+        _ -> <<"mono">>
+    end.
+
+-spec stream_payload(kz_term:ne_binary(), kz_json:object(), pid(), pid(), state()) -> kz_json:object().
+stream_payload(Name, Data, ListenerPid, From, _State) ->
+    Prop = [{<<"amqp_listener">>, kz_term:to_binary(ListenerPid)}
+           ,{<<"amqp_consumer">>, kz_term:to_binary(kz_amqp_channel:consumer_pid())}
+           ,{<<"response_pid">>, kz_term:to_binary(From)}
+           ,{<<"node">>, kz_term:to_binary(node())}
+           ,{<<"name">>, Name}
+           ],
+    kz_json:set_values(Prop, Data).
+
+send_stream_error(Data, Reason, #state{call=Call}) ->
+    Props = [{<<"Stream-Name">>, kz_json:get_ne_binary_value(<<"name">>, Data)}
+            ,{<<"Call-ID">>, kapps_call:call_id(Call)}
+            ,{<<"Account-ID">>, kapps_call:account_id(Call)}
+            ,{<<"Reason">>, <<"error">>}
+            ,{<<"Error-Message">>, Reason}
+            | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
+            ],
+    kz_amqp_worker:cast(Props, fun kapi_pivot:publish_stream_stop/1).
