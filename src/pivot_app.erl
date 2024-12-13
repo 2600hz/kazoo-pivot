@@ -28,7 +28,7 @@ start(_Type, _Args) ->
 %% @doc Implement the application stop behaviour.
 %% @end
 %%------------------------------------------------------------------------------
--spec stop(any()) -> any().
+-spec stop(any()) -> 'ok'.
 stop(_State) ->
     'ok'.
 
