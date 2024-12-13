@@ -643,7 +643,6 @@ clear_play_buffer(#{file := File, mark_name := Name}, Context) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% @equiv parse_url(Schema, Host, Path, Port).
 %% @end
 %%------------------------------------------------------------------------------
 -spec parse_url(kz_term:api_binary() | uri_string:uri_map() | uri_string:error()) ->
