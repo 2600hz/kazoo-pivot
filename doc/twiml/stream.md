@@ -188,7 +188,7 @@ For example:
 There a different ways when a stream can be stopped:
 
 <!-- TODO link to /channels API (and konami_pro stream action??) -->
-1. An error is occured during start of stream, or while stream was in progress.
+1. An error is occurred during start of stream, or while stream was in progress.
 2. The call that stream is started on has beend ended.
 3. Stop is requested via an API call.
 4. `<Stop><Stream>` is used in a unidirectional stream

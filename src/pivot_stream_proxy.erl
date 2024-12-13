@@ -534,7 +534,7 @@ decode_playback_media(_) ->
 
 %%------------------------------------------------------------------------------
 %% @doc Gets the received media stream and write it to the current buffer, if
-%% no buffer yet inits the new buffer by creating a temprorary file.
+%% no buffer yet inits the new buffer by creating a temporary file.
 %% @end
 %%------------------------------------------------------------------------------
 -spec write_to_buffer(binary(), buffer(), context()) ->
