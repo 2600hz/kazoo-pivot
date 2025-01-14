@@ -1,5 +1,5 @@
 %%%-----------------------------------------------------------------------------
-%%% @copyright (C) 2012-2024, 2600Hz
+%%% @copyright (C) 2012-2025, 2600Hz
 %%% @doc
 %%% This Source Code Form is subject to the terms of the Mozilla Public
 %%% License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,11 +62,11 @@
                     ,sequence_number => pos_integer()
                     ,start => kz_time:start_time()
                     ,type => 'raw' | 'unidirectional' | 'bidirectional'
-                    ,error => kz_term:ne_binary()
-                    ,stop_reason => kz_term:ne_binary()
+                    ,error => kz_term:api_ne_binary()
+                    ,stop_reason => kz_term:api_ne_binary()
                     }.
 
--type remote_uri() :: {Scheme :: binary(), Host :: string(), Port :: pos_integer(), Path :: binary()}.
+-type remote_uri() :: {Scheme :: binary(), Host :: string(), Port :: inet:port_number(), Path :: binary()}.
 -type event() :: 'connect' | 'start' | 'stop' | 'media' | 'dtmf' | 'mark' | 'clear'.
 
 %%%=============================================================================
@@ -118,7 +118,7 @@ terminate(Reason, _Req, Context) ->
 -spec websocket_init(context()) -> {'ok', context()}.
 websocket_init(#{call_id := CallId}=Context) ->
     kz_log:put_callid(CallId),
-    kz_monitor:track_me(self()),
+    kz_monitor:track_me(),
     TRef = erlang:send_after(?DATA_TIMEOUT_MS, self(), {'timeout', 'no_data'}),
     {'ok', Context#{proxy_pid => self(), data_timeout_ref => TRef}}.
 
@@ -398,14 +398,15 @@ connect_remote_ws(#{remote_uri := {Scheme, Host, Port, Path}}=Context) ->
     lager:debug("connecting to host ~s://~s:~b", [Scheme, Host, Port]),
     GunOpts = #{retry => 2
                ,retry_timeout => 2 * ?MILLISECONDS_IN_SECOND
+               ,protocols => preferred_protocol(Scheme)
+                %% uncomment when find a safe way to support ws with http/2
+                %% ,http2_opts => #{notify_settings_changed => 'true'}
                },
     {'ok', ConnPid} = gun:open(Host, Port, maybe_tls(Scheme, GunOpts)),
     lager:debug("started WS gun client(~p) in", [ConnPid]),
     %% waits 5ms
-    case gun:await_up(ConnPid) of
+    case wait_for_connection(ConnPid) of
         {'ok', _Protocol} ->
-            lager:debug("connection with procotl ~s", [_Protocol]),
-
             StreamRef = gun:ws_upgrade(ConnPid, Path, [], #{}),
             lager:debug("upgrading to ws at path ~s", [Path]),
 
@@ -415,27 +416,81 @@ connect_remote_ws(#{remote_uri := {Scheme, Host, Port, Path}}=Context) ->
                              ,remote_conn_timeout_ref => ConnTRef
                              },
             {[], NewCtx, 'hibernate'};
+        {'error', Error} ->
+            {['close'], Context#{error => Error}}
+    end.
+
+-spec preferred_protocol(kz_term:ne_binary()) -> kz_term:atoms().
+preferred_protocol(<<"ws">>) ->
+    ['http'];
+preferred_protocol(<<"wss">>) ->
+    %% Websocket over http/2 is not good idea, requires RFC8441 "SETTINGS_ENABLE_CONNECT_PROTOCOL"
+    %% and in general is overlapping with http/2 push. (only Chrome defaults to ws over http/2)
+    %% See also: https://daniel.haxx.se/blog/2016/06/15/no-WebSockets-over-http2/
+    %%
+    %% Lets use http/1 for websocket, and if needed find a way to support http/2 in future.
+    %%
+    %% For example apparantly ngrok.io does not support CONNECT protocol, and gun:ws_upgrade will fail
+    %% with "Stream reset by server." error.
+    %%
+    %% gun will default to [http2, http] for tls transport.
+    %% Fun fact: curl refuses to use http/2 for websocket :)
+    ['http'].
+
+-spec maybe_tls(kz_term:ne_binary(), gun:opts()) -> gun:opts().
+maybe_tls(<<"wss">>, Opts) ->
+    Opts#{transport => 'tls'
+         ,tls_opts => kz_ssl:ssl_opts([{'customize_hostname_check', [{'match_fun', public_key:pkix_verify_hostname_match_fun('https')}]}])
+         };
+maybe_tls(_Scheme, Opts) ->
+    Opts.
+
+-spec wait_for_connection(pid()) ->
+          {'ok', atom()} |
+          {'error', kz_term:ne_binary()}.
+wait_for_connection(ConnPid) ->
+    case gun:await_up(ConnPid) of
+        {'ok', Protocol} ->
+            do_await_enable_connect_protocol(Protocol, ConnPid);
         {'error', {'down', Error}} ->
             lager:debug("connection ~p failed: ~p", [ConnPid, Error]),
-            Reason = connection_reason(Error),
-            {['close'], Context#{error => kz_binary:format("connect failed~s", [Reason])}};
+            {'error', kz_binary:format("connect failed~s", [connection_reason(Error)])};
         {'error', 'timeout'} ->
             lager:debug("connection ~p timeout", [ConnPid]),
             gun:close(ConnPid),
-            {['close'], Context#{error => <<"connect timeout">>}}
+            {'error', <<"connect timeout">>}
     end.
 
+%% Technically currently this has no effect since we don't preferred http2, but still
+%% have this code here to avoid future headache of hunting down how to use gun with websocket over http/2.
+%% FYI, you must set enable_connect_protocol to true in protocol option if you are using
+%% Cowboy2 server.
+-spec do_await_enable_connect_protocol(atom(), pid()) ->
+          {'ok', atom()} |
+          {'error', kz_term:ne_binary()}.
+do_await_enable_connect_protocol('http', _) ->
+    {'ok', 'http'};
+do_await_enable_connect_protocol('http2', ConnPid) ->
+    %% we cannot do a CONNECT :protocol request until the server tells us we can.
+    case gun_await(ConnPid) of
+        {'notify', 'settings_changed', #{enable_connect_protocol := 'true'}} ->
+            lager:debug("connected with protocol http2"),
+            {'ok', 'http2'};
+        _Other ->
+            lager:info("connected with protocol http/2, server does not support SETTINGS_ENABLE_CONNECT_PROTOCOL. ws_upgrade will fail"),
+            {'error', <<"http/2 server does not support SETTINGS_ENABLE_CONNECT_PROTOCOL (RFC8441)">>}
+    end.
+
+-dialyzer([{nowarn_function, gun_await/1}]).
+gun_await(ConnPid) ->
+    %% when the upstream dev recommend hack your way into dialyzer /shrug
+    gun:await(ConnPid, 'undedfined').
+
+-spec connection_reason(any()) -> binary().
 connection_reason({'shutdown', Reason}) when is_atom(Reason) ->
     <<": ", (kz_term:to_binary(Reason))/binary>>;
 connection_reason(_) ->
     <<>>.
-
-maybe_tls(<<"wss">>, Opts) ->
-    Opts#{transport => 'tls'
-         ,tls_opts => kz_ssl:ssl_opts()
-         };
-maybe_tls(_Scheme, Opts) ->
-    Opts.
 
 -spec stream_started(context()) ->
           {cowboy_websocket:commands(), context()} |
@@ -454,7 +509,7 @@ stream_started(#{data := Data
             | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
             ],
     Ctx = Context#{type => kz_term:to_atom(Type)},
-    kz_amqp_worker:cast(Props, fun kapi_pivot:publish_stream_start/1),
+    _ = kz_amqp_worker:cast(Props, fun kapi_pivot:publish_stream_start/1),
     maybe_send_connect_events(Data, Ctx).
 
 %%------------------------------------------------------------------------------
