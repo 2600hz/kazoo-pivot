@@ -1,5 +1,5 @@
 %%%-----------------------------------------------------------------------------
-%%% @copyright (C) 2012-2024, 2600Hz
+%%% @copyright (C) 2012-2025, 2600Hz
 %%% @doc Handle processing of the pivot call
 %%% @author James Aimonetti
 %%%
@@ -839,11 +839,12 @@ maybe_hangup(Call) -> kapps_call_command:queued_hangup(Call).
 -spec publish_failed(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
 publish_failed(Call, RequesterQ) ->
     PubFun = fun(P) -> kapi_pivot:publish_failed(RequesterQ, P) end,
-    kz_amqp_worker:cast([{<<"Call-ID">>, kapps_call:call_id(Call)}
-                        | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
-                        ]
-                       ,PubFun
-                       ).
+    _ = kz_amqp_worker:cast([{<<"Call-ID">>, kapps_call:call_id(Call)}
+                            | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
+                            ]
+                           ,PubFun
+                           ),
+    'ok'.
 
 %% after 10ms, send stop_call to pivot_call process,
 %% to avoid race condition between stop_call and DOWN message
@@ -961,4 +962,5 @@ send_stream_error(Data, Reason, #state{call=Call}) ->
             ,{<<"Error-Message">>, Reason}
             | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
             ],
-    kz_amqp_worker:cast(Props, fun kapi_pivot:publish_stream_stop/1).
+    _ = kz_amqp_worker:cast(Props, fun kapi_pivot:publish_stream_stop/1),
+    'ok'.
