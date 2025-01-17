@@ -69,6 +69,8 @@
                ,debug = 'false' :: boolean()
                ,requester_queue :: kz_term:api_ne_binary()
                ,streams = [] :: [#stream{}]
+               ,flow_doc :: kz_term:api_object()
+               ,flow_type :: kz_term:ne_binary()
                }).
 -type state() :: #state{}.
 
@@ -182,12 +184,14 @@ get_stream_pids(Props) ->
 %% @doc Initializes the server.
 %% @end
 %%------------------------------------------------------------------------------
--spec init([kapps_call:call() | kz_json:object()]) -> {'ok', state(), 'hibernate'} |
+-spec init([kapps_call:call() | kz_json:object()]) ->
+          {'ok', state(), 'hibernate'} |
           {'stop', 'normal'}.
 init([Call, JObj]) ->
     init(Call, JObj, kapps_call_events:is_destroyed(Call)).
 
--spec init(kapps_call:call(), kz_json:object(), boolean()) -> {'ok', state(), 'hibernate'} |
+-spec init(kapps_call:call(), kz_json:object(), boolean()) ->
+          {'ok', state(), 'hibernate'} |
           {'stop', 'normal'}.
 init(_Call, _JObj, 'true') ->
     lager:info("call has gone down while we started up"),
@@ -215,6 +219,8 @@ init(Call, JObj, 'false') ->
            ,debug=kz_json:is_true(<<"Debug">>, JObj, 'false')
            ,requester_queue = kapps_call:controller_queue(Call)
            ,custom_request_headers = format_request_headers(kz_json:get_json_value(<<"Custom-Request-Headers">>, JObj))
+           ,flow_doc = kz_json:get_ne_binary_value(<<"Flow-Doc">>, JObj)
+           ,flow_type = kz_json:get_ne_binary_value(<<"Flow-Type">>, JObj, <<"application/xml">>)
            }
     ,'hibernate'
     }.
@@ -241,7 +247,9 @@ handle_call(_Request, _From, State) ->
 %% @doc Handling cast messages.
 %% @end
 %%------------------------------------------------------------------------------
--spec handle_cast(any(), state()) -> {'noreply', state()} |
+-spec handle_cast(any(), state()) ->
+          {'noreply', state()} |
+          {'noreply', state(), 'hibernate'} |
           {'stop', 'normal', state()}.
 handle_cast('usurp', State) ->
     lager:debug("terminating pivot call because of usurp"),
@@ -251,6 +259,14 @@ handle_cast({'request', Uri, Method}
                   ,request_format=ReqFormat
                   }=State) ->
     handle_cast({'request', Uri, Method, req_params(ReqFormat, Call)}, State);
+handle_cast({'request', 'undefined', _Method, _Params}
+           ,#state{call=Call
+                  ,requester_queue=RequesterQ
+                  }=State
+           ) ->
+    lager:debug("request uri is undefined, ending the call"),
+    publish_failed_or_hangup(Call, RequesterQ),
+    {'stop', 'normal', State};
 handle_cast({'request', Uri, Method, Params}
            ,#state{call=Call
                   ,requester_queue=RequesterQ
@@ -276,18 +292,10 @@ handle_cast({'request', Uri, Method, Params}
             {'stop', 'normal', State}
     end;
 
-handle_cast({'gen_listener', {'created_queue', Q}}
-           ,#state{call=Call
-                  ,voice_uri = VoiceUri
-                  ,request_format = ReqFormat
-                  ,method = Method
-                  }=State
-           ) ->
+handle_cast({'gen_listener', {'created_queue', Q}}, #state{call=Call}=State) ->
     lager:debug("acquired queue ~s", [Q]),
-
-    BaseParams = req_params(ReqFormat, Call),
-    new_request(self(), VoiceUri, Method, BaseParams),
-    {'noreply', State#state{call=kapps_call:set_controller_queue(Q, Call)}};
+    NewState = State#state{call=kapps_call:set_controller_queue(Q, Call)},
+    maybe_exec_flow_doc_or_new_request(NewState);
 
 handle_cast({'stream_start', From, Data}, State) ->
     NewState = maybe_limit_stream(Data, From, State),
@@ -386,7 +394,9 @@ handle_cast(_Req, State) ->
 %% @doc Handling all non call/cast messages.
 %% @end
 %%------------------------------------------------------------------------------
--spec handle_info(any(), state()) -> {'noreply', state()} |
+-spec handle_info(any(), state()) ->
+          {'noreply', state()} |
+          {'noreply', state(), 'hibernate'} |
           {'stop', any(), state()}.
 handle_info({'hard_stop', _Call}, State) ->
     {'stop', 'normal', State};
@@ -609,6 +619,53 @@ code_change(_OldVsn, State, _Extra) ->
 %% @doc
 %% @end
 %%------------------------------------------------------------------------------
+-spec maybe_exec_flow_doc_or_new_request(state()) ->
+          {'noreply', state()} |
+          {'noreply', state(), 'hibernate'} |
+          {'stop', 'normal', state()}.
+maybe_exec_flow_doc_or_new_request(#state{flow_doc='undefined'
+                                         ,call=Call
+                                         ,voice_uri = VoiceUri
+                                         ,request_format = ReqFormat
+                                         ,method = Method
+                                         }=State
+                                  ) ->
+    BaseParams = req_params(ReqFormat, Call),
+    new_request(self(), VoiceUri, Method, BaseParams),
+    {'noreply', State};
+maybe_exec_flow_doc_or_new_request(#state{flow_doc=FlowDoc
+                                         ,flow_type=FlowType
+                                         ,call=Call
+                                         ,debug=Debug
+                                         ,requester_queue=RequesterQ
+                                         }=State
+                                  ) ->
+    maybe_debug_resp(Debug, Call, <<"PivotFlowDoc">>, [], kz_json:encode(FlowDoc)),
+
+    AMQPConsumer = kz_amqp_channel:consumer_pid(),
+    HandleArgs = [RequesterQ
+                 ,kzt_util:set_amqp_listener(self(), Call)
+                 ,FlowType
+                 ,FlowDoc
+                 ,AMQPConsumer
+                 ],
+    {Pid, Ref} = kz_process:spawn_monitor(fun handle_resp/5, HandleArgs),
+    lager:debug("processing resp with ~p(~p)", [Pid, Ref]),
+    {'noreply'
+    ,State#state{request_id = 'undefined'
+                ,request_params = kz_json:new()
+                ,response_body = []
+                ,response_content_type = <<>>
+                ,response_pid = Pid
+                ,response_ref = Ref
+                ,flow_doc = 'undefined'
+                }
+    ,'hibernate'
+    }.
+%%------------------------------------------------------------------------------
+%% @doc
+%% @end
+%%------------------------------------------------------------------------------
 -spec send_req(kapps_call:call(), kz_term:ne_binary(), http_method(), kz_term:proplist(), state()) ->
           {'ok', kz_http:req_id(), kapps_call:call()} |
           {'stop', kapps_call:call()}.
@@ -824,7 +881,7 @@ req_content_type(<<"json">>) ->
 
 -spec is_first_pivot_request(kapps_call:call()) -> boolean().
 is_first_pivot_request(Call) ->
-    1 == kzt_util:iteration(Call).
+    1 =:= kzt_util:iteration(Call).
 
 -spec publish_failed_or_hangup(kapps_call:call(), kz_term:ne_binary()) -> 'ok'.
 publish_failed_or_hangup(Call, RequesterQ) ->
