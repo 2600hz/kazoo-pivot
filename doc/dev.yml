@@ -1,5 +1,6 @@
   - 'Pivot: Accept 3rd party dialplan commands to control calls':
     - 'applications/pivot/doc/README.md'
+    - 'applications/pivot/doc/doorman.md'
     - 'applications/pivot/doc/issues.md'
     - 'applications/pivot/doc/kazoo/README.md'
     - 'applications/pivot/doc/kazoo/bridging.md'
@@ -12,4 +13,8 @@
     - 'applications/pivot/doc/kazoo/recording.md'
     - 'applications/pivot/doc/kazoo/say.md'
     - 'applications/pivot/doc/requests.md'
+    - 'applications/pivot/doc/stream-call-media/events.md'
+    - 'applications/pivot/doc/stream-call-media/overview.md'
+    - 'applications/pivot/doc/stream-call-media/websocket-messages.md'
     - 'applications/pivot/doc/twiml/README.md'
+    - 'applications/pivot/doc/twiml/stream.md'
