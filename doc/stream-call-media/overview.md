@@ -25,10 +25,10 @@ This is more simpler type, and sends the Call's audio over WebSocket, but this i
 application _can not_ send messages back to the Pivot server.
 
 In this stream type, all WebSocket messages are in plain text and are in JSON format. The raw audio is encoded as base64 in
-[`media`](./websocket-messages.md#media) message.
+[`media`](./websocket-messages.md#media-message) message.
 
 Any detected DTMF in inbound direction (like callerr presses a touch-tone number)
-may also be sent over WebScoket in [`dtmf`](./websocket-messages.md#dtmf) message.
+may also be sent over WebScoket in [`dtmf`](./websocket-messages.md#dtmf-message) message.
 
 
 Unidirectional stream can be started using `<Start><Stream>` TwiML. When the stream is started, Pivot immediately continues processing
@@ -59,11 +59,11 @@ uses TTS to say the specified string from `<play>` verb and ends the call and st
 
 ## Raw Audio Streams
 
-If you just need raw audio of the call and no need the extra JSON messages in plain text format, you can use [`rawAudio`](../twiml/stream.md#rawAudio)
+If you just need raw audio of the call and no need the extra JSON messages in plain text format, you can use [`rawAudio`](../twiml/stream.md#rawaudio)
 attribute of `<Stream>`. This type is similiar to [Unidirectional Streams](#unidirectional-streams) in that your applications can not
 sned WebSocket message back to Pivot, but instead your applications receives the raw audio in binary format.
 
-Also there is no [`dtmf`](./websocket-messages.md#dtmf) messages in this type. Other than this, this type is similiar to Unidirectional Streams.
+Also there is no [`dtmf`](./websocket-messages.md#dtmf-message) messages in this type. Other than this, this type is similiar to Unidirectional Streams.
 
 For example to start a Raw Aduio stream:
 
@@ -87,7 +87,7 @@ After WebSocket connection is established, the call's audio streams to your appl
 some aduio back to Pivot over same WebSocket connection to be played on the call.
 
 Any detected DTMF in inbound direction (like caller presses a touch-tone number)
-may also be sent over WebScoket in [`dtmf`](./websocket-messages.md#dtmf) message.
+may also be sent over WebScoket in [`dtmf`](./websocket-messages.md#dtmf-message) message.
 
 Bidirectional stream can be started using `<Connect><Stream>`. After the websocket connection is established, no more instruction from the
 TwiML document will be execute, and Pivot blocks until either the call ends or your application disconnect from WebSocket, in either case Pivot will

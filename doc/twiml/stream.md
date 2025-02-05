@@ -72,11 +72,11 @@ or if the call is hungup or your websocket server disconnects.
 | Name                        | Values Description                                                                                                 | Default value                 |
 |-----------------------------|--------------------------------------------------------------------------------------------------------------------|-------------------------------|
 | [`url`](#url)               | Optional, a relative or absolute URL to stream the audio to                                                        | Default to TwiML document url |
-| [`audioMix`](#audioMix)     | Specifies the audio channel of the stream. Optional.                                                               | `mono`                        |
+| [`audioMix`](#audiomix)     | Specifies the audio channel of the stream. Optional.                                                               | `mono`                        |
 | [`id`](#id)                 | Only when using `<Stop><Stream>`, used to identify the attached stream to stop by its unique stream ID. Optional.  | none                          |
 | [`name`](#name)             | Your custom unique friendly name to identify the stream. Optional.                                                 | Randomly generated            |
-| [`rawAudio`](#rawAudio)     | Specifies to send the raw audio instead of encoded as Base64 in a JSON format. Optional.                           | `false`                       |
-| [`sampleRate`](#sampleRate) | Specifies the audio sample rate of the stream. Optional.                                                           | `8000`                        |
+| [`rawAudio`](#rawaudio)     | Specifies to send the raw audio instead of encoded as Base64 in a JSON format. Optional.                           | `false`                       |
+| [`sampleRate`](#samplerate) | Specifies the audio sample rate of the stream. Optional.                                                           | `8000`                        |
 | [`track`](#track)           | Specfies what side of the call's audio to stream. Optional.                                                        | `inbound_track`               |
 
 
@@ -129,7 +129,7 @@ When no `id` or [`name`](#name) is provided, `<stop><Stream>` will stop all stre
 Unidirectional stream will be created using `<Start><Stream>` can have this optional attribute to request that Pivot must send the
 raw call's audio in binary instead of encoding in Base64 format and sent in a JSON format message.
 
-This option only available in unidirectional stream and when used no [`dtmf`](../stream-call-media/websocket-messages.md#dtmf) message will be sent.
+This option only available in unidirectional stream and when used no [`dtmf`](../stream-call-media/websocket-messages.md#dtmf-message) message will be sent.
 See [Raw Audio Streams](../stream-call-media/overview.md#raw-audio-streams) for further information.
 
 ### `sampleRate`
