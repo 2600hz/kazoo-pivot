@@ -1,29 +1,27 @@
 # \<Stream>
 
-Stream noun instructs the Pivot to stream an on-going call's audio to your server over a WebSocket connection
-in real-time.
+Stream an active call's audio from Pivot to your server through websockets in real time.
 
 
 ## Overview
 
-\<Stream> let you access the raw audio of a call, for further processing by your application.
-The Audio is encoded in `appplication/x-mulaw` (commonly known as PCMU or G.711u) format encoding.
+`<Stream>` let you access the raw audio of a call, for further processing by your application.
+The Audio is encoded in `appplication/x-mulaw` (commonly known as PCMU or G.711u) format.
 
-See [Stream Call Media](../stream-call-media/overview.md) to learn more about Pivot's stream and its
-messages. This page is reference for usage `<Stream>` noun.
+See [Stream Call Media](../stream-call-media/overview.md) to learn more about Pivot's messages
+through the websocket. This page is reference for the `<Stream>` term.
 
-Pivot TwiML supports multiple ways create media stream:
+Pivot TwiML supports multiple ways create a media stream:
 
 1. Using `<Start><Stream>` to create a unidirectional Stream, which only sends audio to
 your server without allowing your application to send messages back over websocket. The messages
 are in JSON format with raw audio encoded as Base64. After the stream started, Pivot will immediately
-continues to process the rest of TwiML document, if there are any, otherwise it ends the call.
-2. In unidirectional stream, it is possible to receive only raw aduio as binary, by setting
+continue to process the rest of TwiML document. If Stream is the last term, the call will end.
+2. In unidirectional streams, it is possible to receive only raw Audio as binary, by setting
  `<Start><Stream rawAudio="true">`.
 3. If your application needs to play media back on the call, `<Connect><Stream>` allows you
-to create a bidirectional Stream. Here after the stream started, Pivot will abondon the execution of
-the rest of TwiML document and waits for either the call or stream to ends. It stops and
-hangup the call if it is not already hungup.
+to create a bidirectional Stream. Here after the stream started, Pivot will abandon the execution of
+the TwiML document and end the call when the stream ends or a party hangs up.
 
 
 Here is a simple example of creating unidirectional stream:
@@ -38,17 +36,19 @@ Here is a simple example of creating unidirectional stream:
 </Response>
 ```
 
-This instruct Pivot to send the current call audio in near real-time to your WebSocket server
+This instructs Pivot to send the current call audio in near real-time to your WebSocket server
 at `wss://your_application/stream` address.
 
-Be sure to include other instruction after an unidirectional stream since it will continues
-immediately to process the the rest of TwiML document. Here `<Say>` verb is used.
-After TwiML document is executed, the call will end and stream will be stopped.
+Be sure to include other instructions after an unidirectional stream since pivot 
+immediatel continues processing the the rest of TwiML document. In this example,
+`<Say>` will execute, then the call will end and the stream will close.
 
 <!-- TODO link to /channels API (and konami_pro stream action??) -->
-The stream will end either by using `<Stop><Stream>` in case of unidirectional stream or when call is ended, or using API.
 
-Next example will show how to start a bidirectional stream:
+Unidirectional streams can be closed using `<Stop><Stream>`. All stream can be closed by API
+and are always closed when a call ends.
+
+This next example shows a bidirectional stream:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -56,34 +56,34 @@ Next example will show how to start a bidirectional stream:
  <Connect>
      <Stream url="wss://your_application/ostream" />
  </Connect>
- <Say>This verb will never be exexcuted by Pivot on bidirectional streams.</Say>
+ <Say>This verb will never execute after a bidirectional stream.</Say>
 </Response>
 ```
 
 <!-- TODO link to /channels API (and konami_pro stream action??) -->
 In this example, the stream is started in bidirectional mode and your application can send playback media to Pivot
-over same WebSocket connection to be played on the call. The only way to stop the stream is either using API,
-or if the call is hungup or your websocket server disconnects.
+over same WebSocket connection to be played on the call. The only way to stop the stream is either using API, if
+the call is hungup, or your websocket server disconnects.
 
 ## Attributes
 
 `<Start><Stream>` noun has the following attributes:
 
-| Name                        | Values Description                                                                                                 | Default value                 |
-|-----------------------------|--------------------------------------------------------------------------------------------------------------------|-------------------------------|
-| [`url`](#url)               | Optional, a relative or absolute URL to stream the audio to                                                        | Default to TwiML document url |
-| [`audioMix`](#audiomix)     | Specifies the audio channel of the stream. Optional.                                                               | `mono`                        |
-| [`id`](#id)                 | Only when using `<Stop><Stream>`, used to identify the attached stream to stop by its unique stream ID. Optional.  | none                          |
-| [`name`](#name)             | Your custom unique friendly name to identify the stream. Optional.                                                 | Randomly generated            |
-| [`rawAudio`](#rawaudio)     | Specifies to send the raw audio instead of encoded as Base64 in a JSON format. Optional.                           | `false`                       |
-| [`sampleRate`](#samplerate) | Specifies the audio sample rate of the stream. Optional.                                                           | `8000`                        |
-| [`track`](#track)           | Specfies what side of the call's audio to stream. Optional.                                                        | `inbound_track`               |
+| Name                        | Values Description                                                                                                | Default value                 |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------------|-------------------------------|
+| [`url`](#url)               | Optional, a relative or absolute URL to stream the audio to                                                       | Pivot TwiML document url |
+| [`audioMix`](#audiomix)     | Specifies the audio channel of the stream. Optional.                                                              | `mono`                        |
+| [`id`](#id)                 | Only used with `<Stop><Stream>`, identifies the attached stream to stop by its unique stream ID. Optional. | none                          |
+| [`name`](#name)             | Your custom unique friendly name to identify the stream. Optional.                                                | Randomly generated            |
+| [`rawAudio`](#rawaudio)     | Specifies to send the raw audio instead of encoded as Base64 in a JSON format. Optional.                          | `false`                       |
+| [`sampleRate`](#samplerate) | Specifies the audio sample rate of the stream. Optional.                                                          | `8000`                        |
+| [`track`](#track)           | specifies what side of the call's audio to stream. Optional.                                                       | `inbound_track`               |
 
 
 ### `url`
 
 This is the URL that Pivot uses to establish the WebSocket connection and stream the audio. This can be an absolute or relative URL.
-The relative value will be relative to the current TwiML document being processed. If missing the curent TwiML document URL will be used.
+The relative value will be relative to the current TwiML document being processed. If missing the current TwiML document URL will be used.
 
 If relative or missing, a secure WebSocket URL (`wss`) will be assumed. We highly recommend to use secure `wss` when using absolute URL.
 
@@ -91,18 +91,20 @@ Any string query and fragment will discarded from the URL. See [Sending Custom P
 
 ### `audioMix`
 
-This attribute along [`track`](#track) atribute can be used to control how the audio that is being trasmitted to your server must be encoded.
+This attribute along with the[`track`](#track) attribute control how the audio that is being transmitted to your server is encoded.
 
 Available options are: `mono` and `stereo`.
 
 When `mono`, the stream's audio is on a single channel, regardless of the value of [`track`](#track).
 
-When `stereo`, the stream's audio will on 2 Channels. Depend on the value of [`track`](#track), outbound track will be on the
-left channel and inbound track will be on the right channel.
+When `stereo`, the stream's audio will on 2 channels.[`track`](#track) determines which channel 
+(L or R) the inbound and outbound channels are one.
+
+
 
 ### `id`
 
-Each stream will have a unique identifier, generated by 2600Hz. Pivot will be provide this ID over WebSocket to your application
+Each stream will have a unique identifier, generated by 2600Hz. Pivot will provide this ID over WebSocket to your application
 which then can be used to stop the stream.
 
 <!-- TODO link to /channels API (and konami_pro stream action??) -->
