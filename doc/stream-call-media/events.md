@@ -1,17 +1,19 @@
 # Pivot Stream Events
 
-Pivot will publishes some events regarding the streams created by Pivot that you can subscribe to receive.
+During a stream, Pivot will publish some events which your application can subscribe to, using either 
+a Websocket through [Blackhole](https://docs.2600hz.com/git/2600hz/kazoo-blackhole/doc/README.md),
+to receive them in real-time, or through 
+[WebHooks](https://docs.2600hz.com/git/2600hz/kazoo-webhooks/doc/README.md) to receive them via HTTP request.
 
-You are able to subscribe to these events either using Websocket (through BlackHole application) for receiving these in real-time or
-via WebHooks application to received them via a HTTP request to your server.
-
-All Pivot stream events are in `pivot` category of events.
+All Pivot stream events are in the `Pivot` event category.
 
 ## Stream Start
 
-When the WebSocket is properly established between Pivot and your server, this event will be fired. The event includes
-the unique ID generated for this stream and the unique name you requested for the stream. If no name was given to Pivot
-a unique name will begenrated for you.
+
+
+Once the WebSocket is properly established between Pivot and your server, this event fires. The event includes
+the unique ID generated for this stream and if configured, the custom name for the stream. If no name was given 
+Pivot will generate a unique name.
 
 ```json
 {
@@ -26,16 +28,16 @@ a unique name will begenrated for you.
 
 ## Stream Stop
 
-`stream_stop` will indicated the stream is stopped. This event may include the possible reason of stop and
-any potentional error cause the stream to end.
+`stream_stop` fires when the stream ends. This event may include the reason for the stop
+and, if applicable, any error that caused the stream to end.
 
-- `Stream-ID` or `Stream-Name` maybe not present, if stream failed or stopped before initialization.
-- Do not depend on the the value of `Reason`, as it is arbitrary and beacuse of asychronous nature of stream may
-indicates different value. This property is onlt for general information.
-- If `Error-Message` present that means the stream is ended beacuse of an error. You may look into value of this property to
-see some information about why the stream failed.
+- `Stream-ID` or `Stream-Name` maybe not present if stream failed or stopped before initialization.
+- Because of the asynchronous nature of stream, the `Reason` supplied for the stop can be incorrect.
+This property is only for general information
+- If `Error-Message` is present that means the stream is ended because of an error. The message
+may be helpful determining why the stream failed.
 
-Example for a normal ending of a stream:
+Example of a normal ending of a stream:
 
 ```json
 {
@@ -49,7 +51,7 @@ Example for a normal ending of a stream:
 }
 ```
 
-Example for abnormal ending os a stream:
+Example of an abnormal ending os a stream:
 
 ```json
 {

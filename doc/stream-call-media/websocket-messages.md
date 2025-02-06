@@ -1,11 +1,12 @@
 # Pivot Stream WebSocket Messages
 
-Pivot Stream may send plain text messages over WebSocket if the type of stream is anything other than `raw`.
-This applies to both unidirectional and bidirectional. `raw` stream type only receives the call's raw audio as binary messages.
+During both unidirectional and bidirectional Streams, Pivot may send plain text JSON messages over
+the Websocket. During a Bidirectional Stream, your server can optionally send plain text JSON 
+messages back to Pivot.
 
-The plain texts are formatted as JSON.
+During a [`raw`](./overview.md#raw-audio-streams) Stream, Pivot will not send and cannot receive
+these messages.
 
-In case of bidierctional stream, your server can optionally send plain text JSON message back to Pivot.
 
 ## Websocket messages send by Pivot
 
