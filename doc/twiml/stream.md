@@ -215,3 +215,8 @@ For example in a unidirectional stream, you may start and stop the the stream by
 
 Since processing of TwiML immediately continues after stream is started, the WebSocket will receive the audio for the `<Say>` verb
 and not the audio from `<Play>` verb.
+
+## Current Limitations
+
+The stream is encoded using the codec of the call that initiated the stream. Currently Pivot
+cannot re-encode or communicate to your application what codec is used.
