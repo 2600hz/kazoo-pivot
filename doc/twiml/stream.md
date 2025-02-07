@@ -6,7 +6,6 @@ Stream an active call's audio from Pivot to your server through websockets in re
 ## Overview
 
 `<Stream>` let you access the raw audio of a call, for further processing by your application.
-The Audio is encoded in `appplication/x-mulaw` (commonly known as PCMU or G.711u) format.
 
 See [Stream Call Media](../stream-call-media/overview.md) to learn more about Pivot's messages
 through the websocket. This page is reference for the `<Stream>` term.
@@ -40,7 +39,7 @@ This instructs Pivot to send the current call audio in near real-time to your We
 at `wss://your_application/stream` address.
 
 Be sure to include other instructions after an unidirectional stream since pivot 
-immediatel continues processing the the rest of TwiML document. In this example,
+immediately continues processing the the rest of TwiML document. In this example,
 `<Say>` will execute, then the call will end and the stream will close.
 
 <!-- TODO link to /channels API (and konami_pro stream action??) -->
