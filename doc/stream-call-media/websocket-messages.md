@@ -32,7 +32,7 @@ Except the `connected` message, other messages send by Pivot to your server will
 ### Connected message
 
 For the first time that Pivot connects to your WebSocket server, it immediately sends this message to information about the connection itself.
-This message is send only once at the begining and won't be sent afterwards again.
+This message is send only once at the beginning and won't be sent afterwards again.
 
 | Name             | Description               |
 |------------------|---------------------------|
