@@ -10,29 +10,34 @@ these messages.
 
 ## Websocket messages send by Pivot
 
-When the WebSocket connection is established, Pivot will immediatley sends one of each of `connected` and `start` messages in order to your server.
+When the WebSocket connection is established, Pivot will immediately send the 
+[`connected`](#connected-message) and [`start`](#start-message) messages to the server, in that order.
 
-After those messages your appplication can expect to receive a stream of messages:
+After those messages your application can expect to receive a stream of different messages:
 
-- `media`: includes the the Base64 encoded audio of the call.
+- `media`: Includes the the Base64 encoded audio of the call.
 - `dtmf`: Any detected DTMF on the call.
-- `stop`: indicates the and of stream, the stream will end immediatley after this.
-- `mark`: In case of bidirectional stream, this indicates the previously request buffered playback media is finished being played on the call.
+- `stop`: Sent to notify your server immediately before Pivot ends a stream.
+- `mark`: Only used during bidirectional streams, Pivot sends this message when [`media`](#send-a-playback-media-message) from your server finishes playback.
 
-## Common Properties
+## Messages From Pivot
 
-Except the `connected` message, other messages send by Pivot to your server will include these common fields:
+Except the `connected` message, every message to your server will 
+include these three fields and a fourth:
 
-| Name             | Description                                                              |
-|------------------|--------------------------------------------------------------------------|
-| `event`          | Indicates the type of message                                            |
-| `sequenceNumber` | A number indicating the sending order for keeping track of messages sent |
-| `streamSid`      | The unique ID of the stream you use to reference the stream              |
+| Name             | Description                                                                                                    |
+|------------------|----------------------------------------------------------------------------------------------------------------|
+| `event`          | Indicates message type and content. I.E. a ['start'](#start-message) message's `event` field is always `start` |
+| `sequenceNumber` | A number incrementing by one each time Pivot sends a message to track message order.                           |
+| `streamSid`      | The unique ID for this steam which your server should use in replies.                                          |
+
+The fourth field matches name of the `event`, and contains fields specific to to that type of message. 
 
 ### Connected message
 
-For the first time that Pivot connects to your WebSocket server, it immediately sends this message to information about the connection itself.
-This message is send only once at the beginning and won't be sent afterwards again.
+This is the first message Pivot sends after connecting to your WebSocket Server, 
+and contains information about the connection.
+It is sent only once.
 
 | Name             | Description               |
 |------------------|---------------------------|
@@ -46,29 +51,31 @@ This message is send only once at the beginning and won't be sent afterwards aga
   "protocol": "Call",
   "version": "1.0.0"
 }
-
 ```
 
 ### Start message
 
-Immediately after `connected`, Pivot will send this message with information critical about the stream. This message only send only once during
-the time of stream.
+Immediately after `connected`, Pivot sens this message to provide information about the stream 
+and call that initiated it.
+It is sent only once.
 
-| Name                           | Description                                                                                                                                               |
-|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `event`                        | Always set to `start`                                                                                                                                     |
-| `sequenceNumber`               | A number indicating the sending order for keeping track of messages sent                                                                                  |
-| `start`                        |                                                                                                                                                           |
-| `start.accountSid`             | The unique ID of the account the call is associated with                                                                                                  |
-| `start.streamSid`              | The uniqeue ID of the stream                                                                                                                              |
-| `start.callSid`                | The uniqeue ID of the incoming call                                                                                                                       |
-| `start.tracks`                 | Arrays of string which indicates the the type of call's media flow for the stream, possible values are `inbound` and `outbound`                           |
-| `start.mediaFormat`            | Object with streams' media format info                                                                                                                    |
-| `start.mediaFormat.encoding`   | The audio encoding format of the stream, the value depends on the audio encodign used the the endpoint that initiated the stream, usually `audio/x-mulaw` |
-| `start.mediaFormat.sampleRate` | Sample rate of media, as requested when initializing the request by `<Stream>` noun                                                                       |
-| `start.mediaFormat.channels`   | The number of audio channels of the stream's media, as request when initializing the stream with `<Stream>`                                               |
-| `start.customParameters`       | The custom parameters as-is set on `<Stream>` noun                                                                                                        |
-| `streamSid`                    | The unique ID of the stream you use to reference the stream                                                                                               |
+
+| Name                           | Description                                                                                                                                                             |
+|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `event`                        | Always set to `start`                                                                                                                                                   |
+| `sequenceNumber`               | A number incrementing by one each time Pivot sends a message to track message order.                                                                                    |
+| `streamSid`                    | The unique ID for this steam which your server should use in replies.                                                                                                   |
+| `start`                        |                                                                                                                                                                         |
+| `start.accountSid`             | The unique ID of the account the call is associated with                                                                                                                |
+| `start.streamSid`              | The unique ID of the stream                                                                                                                                             |
+| `start.callSid`                | The unique ID of the incoming call                                                                                                                                      |
+| `start.tracks`                 | Array of strings indicating the call's media flow for the stream, possible values are `inbound`, and `outbound`                                                         |
+| `start.mediaFormat`            |                                                                                                                                                                         |
+| `start.mediaFormat.encoding`   | The encoding format for audio in [`media`](#media) messages. Usually `audio/x-mulaw`, but depends on the audio encoding used by the endpoint that initiated the stream. |
+| `start.mediaFormat.sampleRate` | Sample rate for [au  dio](#media), configured by [`<Stream>` `sampleRate`](../twiml/stream.md#samplerate)                                                               |
+| `start.mediaFormat.channels`   | The number of channels in the stream's [audio](#media), configured by [`<Stream>` `track`](../twiml/stream.md#track)                                                    |
+| `start.customParameters`       | The custom parameters as-is set by nesting in [`<Stream>`](../twiml/stream.md#sending-custom-parameters)                                                                |
+
 
 ```json
 {
@@ -96,19 +103,21 @@ the time of stream.
 
 ### Media message
 
-This message included the encoded raw audio of the call. Sends multiple time during life of stream as the audio is received (or sent) to
-the endpoint.
+This message contains the encoded call audio. Pivot sends multiple `media` 
+messages during the life of the stream as audio is sent and received in the
+call.
 
-| Name              | Description                                                                                                                                                                                 |
-|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `event`           | Indicates the type of message                                                                                                                                                               |
-| `media`           | Object containing the media                                                                                                                                                                 |
-| `media.track`     | The track type of the media, depending on initial `<Stream>`, see [`track`](../twiml/stream.md#track) and  [`audioMix`](../twiml/stream.md#audiomix)                                        |
-| `media.chunk`     | Number to keep track of sent chunk of medias, always start at `1` and increments in subsequent media messages                                                                               |
-| `media.timestamp` | The time in seconds since the start of Pivot opened the connection to you server                                                                                                            |
-| `media.payload`   | Base64 encoded of the raw audio, as indicated by `track` may include inbound or outbound or both of call's [track](../twiml/stream.md#track), [mixed](../twiml/stream.md#audiomix) together |
-| `sequenceNumber`  | A number indicating the sending order for keeping track of messages sent                                                                                                                    |
-| `streamSid`       | The unique ID of the stream you use to reference the stream                                                                                                                                 |
+| Name              | Description                                                                                                                                                        |
+|-------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `event`           | Always set to `media`                                                                                                                                              |
+| `sequenceNumber`  | A number incrementing by one each time Pivot sends a message to track message order                                                                                |
+| `streamSid`       | The unique ID for this steam which your server should use in replies                                                                                               |
+| `media`           |                                                                                                                                                                    |
+| `media.track`     | Which audio track this media is from, set by `<Stream>` parameters, see see [`track`](../twiml/stream.md#track) and  [`audioMix`](../twiml/stream.md#audiomix)     |
+| `media.chunk`     | A number, starting at 1 and incrementing every media message to track order                                                                                        |
+| `media.timestamp` | The time in seconds since Pivot opened the connection to you server                                                                                                |
+| `media.payload`   | A Base64 encoding of the raw audio. May include inbound, outbound or both [tracks](../twiml/stream.md#track) on [one or two channels](../twiml/stream.md#audiomix) |
+
 
 ```json
 {
@@ -128,13 +137,10 @@ the endpoint.
 
 Sent at the end of stream, indicating the stream is ended before disconnecting.
 
-| Name              | Description                                                              |
-|-------------------|--------------------------------------------------------------------------|
-| `event`           | Indicates the type of message                                            |
-| `stop.accountSid` | The unique ID of the account the call is associated with                 |
-| `stop.callSid`    | The uniqeue ID of the incoming call                                      |
-| `sequenceNumber`  | A number indicating the sending order for keeping track of messages sent |
-| `streamSid`       | The unique ID of the stream you use to reference the stream              |
+
+| `start.accountSid` | The unique ID of the account the call is associated with                            |
+| `stop.callSid`     | The unique ID of the incoming call                                                  |
+ 
 
 ```json
 {
@@ -150,18 +156,17 @@ Sent at the end of stream, indicating the stream is ended before disconnecting.
 
 ### DTMF message
 
-Sent anytime Pivot received a DTMF from the call's channel that initiated the stream (the inbound track).
+Sent anytime the Pivot receives DTM from the caller (inbound track).
 
-| Name             | Description                                                              |
-|------------------|--------------------------------------------------------------------------|
-| `event`          | Indicates the type of message                                            |
-| `dtmf.track`     | Value is awlays set to `inbound_track`                                   |
-| `dtmf.digit`     | The detected DTMF number as string                                       |
-| `sequenceNumber` | A number indicating the sending order for keeping track of messages sent |
-| `streamSid`      | The unique ID of the stream you use to reference the stream              |
+| Name             | Description                                                                         |
+|------------------|-------------------------------------------------------------------------------------|
+| `event`          | Always set to `dtmf`                                                                |
+| `sequenceNumber` | A number incrementing by one each time Pivot sends a message to track message order |
+| `streamSid`      | The unique ID for this steam which your server should use in replies                |
+| `dtmf.track`     | Always `inbound_track`, pivot does not send DTMF from the callee (outbound track)   |
+| `dtmf.digit`     | The detected DTMF number as string                                                  |
 
 ```json
-
 {
   "event": "dtmf",
   "streamSid":"MZXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
@@ -176,7 +181,7 @@ Sent anytime Pivot received a DTMF from the call's channel that initiated the st
 ### Mark message
 
 
-Sent only on __bidirectional Pivot Streams__, indicating the playback media you sent to Pivot is played on the call. See [Playing media on the call](#play-media-on-the-call).
+Sent only on __bidirectional Pivot streams__, indicating the playback media you sent to Pivot is played on the call. See [Playing media on the call](#play-media-on-the-call).
 
 
 This message will be sent either on:
@@ -187,77 +192,88 @@ This message will be sent either on:
 
 | Name             | Description                                                                                              |
 |------------------|----------------------------------------------------------------------------------------------------------|
-| `event`          | Indicates the type of message                                                                            |
-| `sequenceNumber` | A number indicating the sending order for keeping track of messages sent                                 |
-| `streamSid`      | The unique ID of the stream you use to reference the stream                                              |
+| `event`          | Always set to `mark`                                                                                     |
+| `sequenceNumber` | A number incrementing by one each time Pivot sends a message to track message order                      |
+| `streamSid`      | The unique ID for this steam which your server should use in replies                                     |
 | `mark.name`      | The mark name used by the `mark` message your server sent to Pivot (or set to `unknown` if not provided) |
 
 ```json
 {
- "event": "mark",
- "sequenceNumber": "4",
- "streamSid": "MZXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
- "mark": {
-   "name": "my label"
- }
+  "event": "mark",
+  "sequenceNumber": "4",
+  "streamSid": "MZXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "mark": {
+    "name": "my label"
+  }
 }
 ```
 
-## WebSocket message from your server to Pivot
+## Messages from your Server
 
-In birdirectional mode stream, your server can send message back to Pivot. These messages are solely for the propuse of playing
-some audio back to the call and control the follow of this playback.
+During a bidirectional stream, your server can send messages back to Pivot. There are multiple
+message types, but all of them are for sending audio and controlling playback on the call.
 
-- `media`: streams of the playback media, all media messages are buffered until the mark message is sent which then this buffer gets played on the call.
-- `mark`: indicates the streaming of playback media is finished, and it should be played on the call.
-- `clear`: discard and empty all media and their buffers.
+- `media`: Streams of the playback media. Audio from `media` messages is not played immediately.
+Instead, it is buffered until Pivot receives a `mark` message.
+- `mark`: When pivot receives this message, all buffered audio is played on the call.
+- `clear`: Pivot discards all buffered audio when it receives a `clear` message.
 
-Sending anf of these messages to Pivot on ` unidirectional` if prohibited and Pivot will ignores if received any messages back from your server.
+On a unidirectional or `raw` stream, Pivot will ignore any messages it receives through the connection.
 
-### Play media on the call
+### Playing Call Media
 
-<!-- TODO: write me please ^.; overview of low of how to play a media on the call, the message your server send and the message that pivot may send and such -->
+To initiate playback, send a [`media`](#send-a-playback-media-message) message to Pivot. 
+Your server may break audio files up into as many separate `media` messages as needed to send
+the complete file,
+similar to how Pivot sends audio one chunk at a time to you during a stream. Pivot 
+will not immediately play audio received through `media` messages. Instead, it buffers audio
+until it receives a [`mark`](#send-a-mark-message-to-play-the-media-on-the-call)
+message. Once Pivot receives `mark`, it immediately plays the audio buffer to the call.
 
-For a better interaction with caller, you may send some media to be played on the call. For this propuse you must the Pivot Stream in __bidirectional__ mode.
+If you want to cancel the current buffered media for any reason, you may send a 
+[`clear`](#clear-the-buffered-media) message. Pivot will clear all buffered
+media messages.
 
-To initiat the playback media, you start by sending [`media`](#send-a-playback-media-message) to Pivot. You may send as many as media message you need.
-Pivot won't play these receive media message chunks, instead it will buffer them. When you are done sending all media needed to be played, you will send
-a [`mark`](#send-a-mark-message-to-play-the-media-on-the-call) to Pivot indicating the end of buffered playback media.
+Once Pivot starts playback of your audio after receiving `mark`, it starts
+a new audio buffer. Additional `media` messages will be on the new `buffer`,
+and will not play until another `mark` message is received. If Pivot is still
+playing audio from the first buffer when it receives the second `mark` message,
+Pivot will wait until playback of the first buffer completes before playing audio
+from the second buffer.
 
-Pivot will now immediatly playing the received media on the call.
+A `clear` message will only clear media from the current active buffer. Once a `mark`
+is received and audio is queued for playback, it cannot be cleared. Additionally a
+`clear` message will not cancel playback of audio currently being played on the call.
+In other words, only `media` messages from after the most recent `mark` message received
+by Pivot can be cleared.
 
-If you want to cancel the current buffered media for any reason, you may send a [`clear`](#clear-the-buffered-media) message so Pivot will clear all buffered media messages.
-
-If you buffer some media, then send mark message to get them played and immediatly start buffering another media, Pivot will buffer them, but if you issue a `mark`, before you wait for previous
-buffered to finsihed playing on the call, the current buffered media won't be played on the call immediatly, instead it will be queued to played after. Any ququed play command will be play in the order
-the buffered media mark message is sent.
-
-If you send a `clear` message, any current activly buffering media will be cleared. Curerntly sending a `clear` message after a `mark` message won't cancel the play, even if it is queued.
-
-When sending the first `media` message to start buffering the media, you __MUST__ specify the media encoding format. If not specified, the media message and its
-subsequent messages will be ignored entirely. <!-- TODO: actually if any subseuqnet media message have Content type, it will be get buffered, thou earlier messages are ignored -->
-
-
-### Send a playback media message
+### Send Media to Pivot's Buffer
 
 <!-- TODO write this, add properties table -->
 
-starts a buffer on pivot, all received media messages are wirtten into that buffer waiting for mark to be played on the call
-`format.encoding` is REQUIRED AND MUST be set on the first current playback media, indicating the encoding of media.
-support encoding are `audio/mp3` and `audio/wav`.
+The first `media` message from your server __MUST__ include the audio encoding format. 
+Pivot will only begin buffering audio after the encoding is specified. Once Pivot
+receives a `media` message with an `encoding`, messages without an `encoding` will be
+buffered. Before then, these messages are ignored entirely. 
 
-sample_rate is arbitrary, (media will resmplae if nessacry, same goes for audio channels).
+After each `mark` message you send to Pivot, you must again specify the encoding
+of the new media stream. Pivot supports audio/mp3` and `audio/wav` encoding. The 
+actual raw audio data must be sent using base64.
 
-the media must be base64 encoded.
+The `encoding` format cannot be changed within one buffer.
 
-Media message (at the start of a new buffer):
+The sample rate of your media can be arbitrary. Pivot will resample if necessary.
 
-| Name                    | Description                                                                                |
-|-------------------------|--------------------------------------------------------------------------------------------|
-| `event`                 | Indicates the type of message                                                              |
-| `media.payload`         | Base64 encoded of the media to be buffered                                                 |
-| `media.format.encoding` | The encoding format of the media, required. Values includes: `audio/mp3`  and `audio/wav`  |
-| `streamSid`             | The unique ID of the stream you use to reference the stream                                |
+
+| Name                    | Description                                                                                                    |
+|-------------------------|----------------------------------------------------------------------------------------------------------------|
+| `event`                 | Always use `media` when sending `media` messages                                                               |
+| `streamSid`             | The unique ID for this steam. Your server receives the streamSid in all of Pivot's messages (except `connect`) |
+| `media.payload`         | Base64 audio of the media to be buffered                                                                       |
+| `media.format.encoding` | The encoding format of the media, required in the first message. Values include: `audio/mp3`  and `audio/wav`  |
+
+
+Media message at the start of a new buffer:
 
 ```json
 {
@@ -270,7 +286,7 @@ Media message (at the start of a new buffer):
 }
 ```
 
-Subsequent media messages until before ending the buffer with `mark` (encoding should not be changed fore the current buffer!):
+Subsequent media messages before ending the buffer with `mark`:
 
 ```json
 {
@@ -282,16 +298,21 @@ Subsequent media messages until before ending the buffer with `mark` (encoding s
 }
 ```
 
-### Send a mark message to play the media on the call
+### Mark Audio for Pivot Playback
 
-finsihes the buffer and plays the call, waiting until it finishes to send back mark with specified name here indicate the playback is done, (buffer is cleared)
-if no mark name is given, it defaults to `unknown`.
+When Pivot receives a mark message it closes the current audio buffer and
+queues it for playback. If Pivot is not already playing media from your server,
+audio from the current buffer is played immediately.
 
-| Name             | Description                                                                                          |
-|------------------|------------------------------------------------------------------------------------------------------|
-| `event`          | Indicates the type of message                                                                        |
-| `mark.name`      | Optional, the naming the play media so you can recognized it later when you recevied `mark`  message |
-| `streamSid`      | The unique ID of the stream you use to reference the stream                                          |
+Once playback completes, Pivot sends back a `mark` message with the `name` specified
+in your mark message. If you did not specify a `name`, Pivot will use `unknown` for the
+name.
+
+| Name        | Description                                                                                                    |
+|-------------|----------------------------------------------------------------------------------------------------------------|
+| `event`     | Always use `mark` when sending `mark` messages                                                                 |
+| `streamSid` | The unique ID for this steam. Your server receives the streamSid in all of Pivot's messages (except `connect`) |
+| `mark.name` | Optional, the name of the media. Pivot sends this back in a `mark` message once playback completes.            |
 
 ```json
 {
@@ -307,12 +328,15 @@ if no mark name is given, it defaults to `unknown`.
 
 Clears any buffered media.
 
-If you send a `clear` message, any current activly buffering media will be cleared. Curerntly sending a `clear` message after a `mark` message won't cancel the play, even if it is queued.
+When Pivot receives a `clear` message, any actively buffering media is deleted. Sending
+a `clear` message after a `mark` message will not cancel playback, even if the audio is
+not yet playing.
 
-| Name             | Description                                                              |
-|------------------|--------------------------------------------------------------------------|
-| `event`          | Indicates the type of message                                            |
-| `streamSid`      | The unique ID of the stream you use to reference the stream              |
+
+| Name        | Description                                                                                                    |
+|-------------|----------------------------------------------------------------------------------------------------------------|
+| `event`     | Always use `clear` when sending `clear` messages                                                               |
+| `streamSid` | The unique ID for this steam. Your server receives the streamSid in all of Pivot's messages (except `connect`) |
 
 ```json
 {
