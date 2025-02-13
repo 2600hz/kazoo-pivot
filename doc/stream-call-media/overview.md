@@ -61,7 +61,7 @@ uses TTS to say the specified string from `<Play>` verb and ends the call and st
 ## Raw Audio Streams
 
 In a [`rawAudio`](../twiml/stream.md#rawaudio) stream, messages are sent as binary audio
-without the extra JSON audio. There will not be [`dtmf`](./websocket-messages.md#dtmf-message)
+without the extra JSON information. There will not be [`dtmf`](./websocket-messages.md#dtmf-message)
 messages in a raw stream. Otherwise, raw streams are similar to Unidirectional Streams, including
 that your application will be unable to send messages back to pivot.
 

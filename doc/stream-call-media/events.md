@@ -9,8 +9,6 @@ All Pivot stream events are in the `Pivot` event category.
 
 ## Stream Start
 
-
-
 Once the WebSocket is properly established between Pivot and your server, this event fires. The event includes
 the unique ID generated for this stream and if configured, the custom name for the stream. If no name was given 
 Pivot will generate a unique name.
