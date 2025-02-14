@@ -23,7 +23,7 @@ to create a bidirectional Stream. Here after the stream started, Pivot will aban
 the TwiML document and end the call when the stream ends or a party hangs up.
 
 
-Here is a simple example of creating unidirectional stream:
+Here is a simple example of creating unidirectional stream: 
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
