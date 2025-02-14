@@ -1,9 +1,10 @@
 # Stream Call Media
 
-The ongoing call audio can be streamed to your server over a WebSocket connection in near real-time.
-This gives you ability to process the audio file by your or any 3rd party services. Stream can be used for
-an interactive conversational IVR or AI assistant, real-time voice detection or call transcription,
-voicemail detection, fraud detection/prevention, voice authentication, and more.
+Pivot can stream ongoing call audio to your server over a WebSocket connection in near real-time.
+This gives you ability to process the audio however your application needs, even send it to a
+third party service. Stream is used for conversational IVRs, AI assistants, real-time voice
+detection and call transcription, voicemail detection, fraud detection/prevention,
+voice authentication, and more.
 
 Stream can only be used for an _ongoing_ call.
 
@@ -15,31 +16,40 @@ or other ways available in 2600Hz.
 something like: The main difference is on the message type, and your application being able to send media to be played back on the call.
 -->
 
-A Pivot stream can only be created using the [`<Stream>`](../twiml/stream.md) term.
-Pivot's stream has a different interface than the stream capability provided by {% BRAND_NAME %} Callflow.
-This page covers _only_ `<Stream>` Pivot TwiML and its different types. <!-- TODO: For Callfloww stream please see callflow doc -->
+Pivot's stream has a different interface than the similar stream capability provided
+by {% BRAND_NAME %} Callflow. This document and the documentation in this section
+pertains only to Pivot's Stream and it's types. Pivot's stream is only
+created using the [`<Stream>`](../twiml/stream.md) term.
+
+During a stream, Pivot will send JSON messages containing call audio and 
+[other call events](./websocket-messages.md) to your server. [Raw streams](#raw-audio-streams)
+which do not use the JSON message format are also available.
 
 ## Unidirectional Streams
 
 This simpler type of stream sends the Call's audio over WebSocket, but does not allow your 
-application to send messages back through the socket.
+application to send messages back to Pivot.
 
-In this stream type, all WebSocket messages are in plain text and are in JSON format. 
-The raw audio is encoded as base64 in a [`media`](./websocket-messages.md#media-message) message.
+In a unidirectional stream, all WebSocket messages are sent in plain text JSON, with the
+audio itself encoded in base64 included in [`media`](./websocket-messages.md#media-message) messages.
 
-Any detected inbound DTMF (like caller presses a touch-tone number)
-may also be sent over the WebScoket in a [`dtmf`](./websocket-messages.md#dtmf-message) message.
+Any detected inbound DTMF (when the caller presses a touch-tone number)
+are also be sent over the WebScoket in a [`dtmf`](./websocket-messages.md#dtmf-message) message.
 
-Unidirectional streams are started `<Start><Stream>` TwiML. Once the stream starts, Pivot 
-immediately continues processing the rest of TwiML document. If no instruction are left the call 
-will end. Therefore you should include instructions after `<Start><Stream>`.
+Pivot starts a unidirectional stream when it encounters `<Start><Stream>` in a Pivot TwiML 
+[response](../request_params.md). Once the stream starts, Pivot immediately continues to
+process the XML. If there are no remaining instructions in the document the call
+will end. ALways include additional instructions after the stream begins.
 
 <!-- TODO link to /channels API (and konami_pro stream action??) -->
-You can stop the stream by using `<Stop><Stream>` TwiML or using API. The stream automatically 
-closes when when the call ends or your application disconnects the WebSocket connection.
+You can stop the stream by using `<Stop><Stream>` Pivot TwiML or by API. The stream automatically 
+closes when when the call ends or your application disconnects from the WebSocket.
 
 <!-- TODO: there is no limitation on which track can be used in bi or uni directional, like _other_ services, /end-of-bragging -->
-There is a limit of attaching 4 streams to a call in Pivot.
+Pivot's streams have several different options for how call audio can me mixed and sent to your
+server. You can always choose what audio to receive and how to receive it in both unidirectional
+and bidirectional streams.
+Pivot can attach up to 4 streams to a call.
 
 <!-- TODO Provide some example apps? it wou;d be nice to create a repo with some code examples for pivot in general -->
 
