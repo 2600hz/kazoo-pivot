@@ -53,7 +53,7 @@ Pivot can attach up to 4 streams to a call.
 
 <!-- TODO Provide some example apps? it wou;d be nice to create a repo with some code examples for pivot in general -->
 
-Here is a simple example of a unidirectional stream:
+Here is a sample unidirectional stream:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
