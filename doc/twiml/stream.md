@@ -68,19 +68,19 @@ the call is hungup, or your websocket server disconnects.
 
 `<Start><Stream>` noun has the following attributes:
 
-| Name                        | Values Description                                                                                                | Default value                 |
-|-----------------------------|-------------------------------------------------------------------------------------------------------------------|-------------------------------|
-| [`url`](#url)               | Optional, a relative or absolute URL to stream the audio to                                                       | Pivot TwiML document url |
-| [`audioMix`](#audiomix)     | Specifies the audio channel of the stream. Optional.                                                              | `mono`                        |
-| [`id`](#id)                 | Only used with `<Stop><Stream>`, identifies the attached stream to stop by its unique stream ID. Optional. | none                          |
-| [`name`](#name)             | Your custom unique friendly name to identify the stream. Optional.                                                | Randomly generated            |
-| [`rawAudio`](#rawaudio)     | Specifies to send the raw audio instead of encoded as Base64 in a JSON format. Optional.                          | `false`                       |
-| [`sampleRate`](#samplerate) | Specifies the audio sample rate of the stream. Optional.                                                          | `8000`                        |
-| [`track`](#track)           | specifies what side of the call's audio to stream. Optional.                                                       | `inbound_track`               |
+| Name                        | Values Description                                                                                         | Default value            |
+|-----------------------------|------------------------------------------------------------------------------------------------------------|--------------------------|
+| [`url`](#url)               | Optional, a relative or absolute URL to stream the audio to                                                | Pivot TwiML document url |
+| [`audioMix`](#audiomix)     | Specifies the audio channel of the stream. Optional.                                                       | `mono`                   |
+| [`id`](#id)                 | Only used with `<Stop><Stream>`, identifies the attached stream to stop by its unique stream ID. Optional. | none                     |
+| [`name`](#name)             | Your custom unique friendly name to identify the stream. Optional.                                         | Randomly generated       |
+| [`rawAudio`](#rawaudio)     | Specifies to send the raw audio instead of encoded as Base64 in a JSON format. Optional.                   | `false`                  |
+| [`sampleRate`](#samplerate) | Specifies the audio sample rate of the stream. Optional.                                                   | `8000`                   |
+| [`track`](#track)           | specifies what side of the call's audio to stream. Optional.                                               | `inbound_track`          |
 
 
 ### `url`
-
+<!-- HEY THIS SHOULD CHANGE WSS -->
 This is the URL that Pivot uses to establish the WebSocket connection and stream the audio. This can be an absolute or relative URL.
 The relative value will be relative to the current TwiML document being processed. If missing the current TwiML document URL will be used.
 
