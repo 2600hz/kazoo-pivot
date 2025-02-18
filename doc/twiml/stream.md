@@ -84,7 +84,7 @@ the call is hungup, or your websocket server disconnects.
 This is the URL that Pivot uses to establish the WebSocket connection and stream the audio. This can be an absolute or relative URL.
 The relative value will be relative to the current TwiML document being processed. If missing the current TwiML document URL will be used.
 
-If relative or missing, a secure WebSocket URL (`wss`) will be assumed. We highly recommend to use secure `wss` when using absolute URL.
+If relative or missing, a secure WebSocket URL (`wss`) will be assumed. We highly recommend  using secure `wss` with absolute urls.
 
 Any string query and fragment will discarded from the URL. See [Sending Custom Parameters](#sending-custom-parameters) on how to include extra custom parameters instead.
 

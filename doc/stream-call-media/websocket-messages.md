@@ -72,7 +72,7 @@ It is sent only once.
 | `start.tracks`                 | Array of strings indicating the call's media flow for the stream, possible values are `inbound`, and `outbound`                                                         |
 | `start.mediaFormat`            |                                                                                                                                                                         |
 | `start.mediaFormat.encoding`   | The encoding format for audio in [`media`](#media) messages. Usually `audio/x-mulaw`, but depends on the audio encoding used by the endpoint that initiated the stream. |
-| `start.mediaFormat.sampleRate` | Sample rate for [au  dio](#media), configured by [`<Stream>` `sampleRate`](../twiml/stream.md#samplerate)                                                               |
+| `start.mediaFormat.sampleRate` | Sample rate for [audio](#media), configured by [`<Stream>` `sampleRate`](../twiml/stream.md#samplerate)                                                               |
 | `start.mediaFormat.channels`   | The number of channels in the stream's [audio](#media), configured by [`<Stream>` `track`](../twiml/stream.md#track)                                                    |
 | `start.customParameters`       | The custom parameters as-is set by nesting in [`<Stream>`](../twiml/stream.md#sending-custom-parameters)                                                                |
 
@@ -85,7 +85,7 @@ It is sent only once.
     "accountSid": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "streamSid": "MZXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "callSid": "CAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "tracks": [ "inbound" ],
+    "tracks": [ "inbound" ],  
     "mediaFormat": {
         "encoding": "audio/x-mulaw",
         "sampleRate": 8000,
@@ -113,7 +113,7 @@ call.
 | `sequenceNumber`  | A number incrementing by one each time Pivot sends a message to track message order                                                                                |
 | `streamSid`       | The unique ID for this steam which your server should use in replies                                                                                               |
 | `media`           |                                                                                                                                                                    |
-| `media.track`     | Which audio track this media is from, set by `<Stream>` parameters, see see [`track`](../twiml/stream.md#track) and  [`audioMix`](../twiml/stream.md#audiomix)     |
+| `media.track`     | Which audio track this media is from, set by `<Stream>` parameters, see see [`track`](../twiml/stream.md#track) and  [`audioMix`](../twiml/stream.md#audiomix) `inbound`, `outbound` or `both`    |
 | `media.chunk`     | A number, starting at 1 and incrementing every media message to track order                                                                                        |
 | `media.timestamp` | The time in seconds since Pivot opened the connection to you server                                                                                                |
 | `media.payload`   | A Base64 encoding of the raw audio. May include inbound, outbound or both [tracks](../twiml/stream.md#track) on [one or two channels](../twiml/stream.md#audiomix) |
