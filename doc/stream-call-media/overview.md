@@ -124,11 +124,6 @@ call. The `<Say>` verb will never be executed by Pivot.
 
 <!-- provide a link to an example application (receiveing side of stream not just XML) in the future -->
 
-## Current Limitations
-
-The stream is encoded using the codec of the call that initiated the stream. Currently Pivot
-cannot re-encode or communicate to your application what codec is used.
-
 ## Addtional Resources
 
 - [\<Stream> Pivot TwiML Reference](../twiml/stream.md)

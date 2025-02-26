@@ -71,7 +71,7 @@ It is sent only once.
 | `start.callSid`                | The unique ID of the incoming call                                                                                                                                      |
 | `start.tracks`                 | Array of strings indicating the call's media flow for the stream, possible values are `inbound`, and `outbound`                                                         |
 | `start.mediaFormat`            |                                                                                                                                                                         |
-| `start.mediaFormat.encoding`   | The encoding format for audio in [`media`](#media) messages. Usually `audio/x-mulaw`, but depends on the audio encoding used by the endpoint that initiated the stream. |
+| `start.mediaFormat.encoding`   | The encoding format for audio in [`media`](#media) messages. Always `audio/l16` when using Pivot |
 | `start.mediaFormat.sampleRate` | Sample rate for [audio](#media), configured by [`<Stream>` `sampleRate`](../twiml/stream.md#samplerate)                                                               |
 | `start.mediaFormat.channels`   | The number of channels in the stream's [audio](#media), configured by [`<Stream>` `track`](../twiml/stream.md#track)                                                    |
 | `start.customParameters`       | The custom parameters as-is set by nesting in [`<Stream>`](../twiml/stream.md#sending-custom-parameters)                                                                |
@@ -87,7 +87,7 @@ It is sent only once.
     "callSid": "CAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "tracks": [ "inbound" ],  
     "mediaFormat": {
-        "encoding": "audio/x-mulaw",
+        "encoding": "audio/l16",
         "sampleRate": 8000,
         "channels": 1
     },
