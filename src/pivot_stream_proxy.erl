@@ -42,6 +42,7 @@
                    ,content_type => kz_term:ne_binary()
                    }.
 -type context() :: #{account_id => kz_term:ne_binary()
+                    ,audio_codec => kz_term:ne_binary()
                     ,buffer => buffer()
                     ,call => kapps_call:call()
                     ,call_id => kz_term:api_ne_binary()
@@ -84,6 +85,7 @@ init(Req, HandlerOpts) ->
     Context = #{call_id => props:get_value('call_id', HandlerOpts)
                ,account_id => cowboy_req:binding('account_id', Req)
                ,handler => ?MODULE
+               ,audio_codec => cowboy_req:header(<<"x-audio-codec">>, Req, <<"L16">>)
                },
     case cowboy_req:parse_header(<<"sec-websocket-protocol">>, Req, []) of
         [] ->
@@ -744,8 +746,8 @@ stream_event('start', Data, Context) ->
      ,id := StreamId
      ,name := Name
      } = Context,
-    MediaFormat = [{<<"encoding">>, <<"audio/x-mulaw">>}
-                  ,{<<"sampleRate">>, kz_json:get_value(<<"sample_rate">>, Data, 8000)}
+    MediaFormat = [{<<"encoding">>, audio_codec_to_encoding(Context)}
+                  ,{<<"sampleRate">>, sample_rate_to_int(Data)}
                   ,{<<"channels">>, channels_from_mix(Data)}
                   ],
     Start = [{<<"accountSid">>, AccountId}
@@ -784,9 +786,7 @@ stream_event('media', Data, Context) ->
      ,data := StreamData
      } = Context,
 
-    %% Track = re:replace(kz_term:get_ne_binary_value(<<"tracks">>, StreamData, <<"inbound_track">>), <<"_track$">>, <<>>),
-
-    Media = [{<<"track">>, kz_json:get_ne_binary_value(<<"tracks">>, StreamData, <<"inbound_track">>)}
+    Media = [{<<"track">>, kz_json:get_ne_binary_value(<<"track">>, StreamData, <<"inbound_track">>)}
             ,{<<"chunk">>, MediaChunk}
             ,{<<"timestamp">>, kz_term:to_binary(kz_time:elapsed_ms(Start))}
             ,{<<"payload">>, base64:encode(Data)}
@@ -826,9 +826,10 @@ stream_event('mark', Name, Context) ->
 
 -spec expand_tracks(kz_json:object()) -> kz_term:ne_binaries().
 expand_tracks(Data) ->
-    case kz_json:get_ne_binary_value(<<"tracks">>, Data, <<"inbound_track">>) of
-        <<"both_tracks">> -> [<<"inbound_track">>, <<"outbound_track">>];
-        Tracks -> [Tracks]
+    case kz_json:get_ne_binary_value(<<"track">>, Data, <<"inbound_track">>) of
+        <<"both_tracks">> -> [<<"inbound">>, <<"outbound">>];
+        Track ->
+            [re:replace(Track, <<"_track$">>, <<>>)]
     end.
 
 -spec channels_from_mix(kz_json:object()) -> integer().
@@ -836,6 +837,29 @@ channels_from_mix(Data) ->
     case kz_json:get_ne_binary_value(<<"mix">>, Data) of
         <<"stereo">> -> 2;
         _ -> 1
+    end.
+
+-spec sample_rate_to_int(kz_json:object()) -> integer().
+sample_rate_to_int(Data) ->
+    SampleRate = kz_json:get_ne_binary_value(<<"sample_rate">>, Data, <<"8000">>),
+    case kz_binary:reverse(SampleRate) of
+        <<"k", Etar/binary>> ->
+            RateInt = kz_term:safe_cast(kz_binary:reverse(Etar), 'undefined', fun kz_term:to_integer/1),
+            safe_sample_rate(SampleRate, RateInt, 1000);
+        _ ->
+            RateInt = kz_term:safe_cast(SampleRate, 'undefined', fun kz_term:to_integer/1),
+            safe_sample_rate(SampleRate, RateInt, 1)
+    end.
+
+-spec safe_sample_rate(kz_term:ne_binary(), kz_term:api_integer(), integer()) -> integer().
+safe_sample_rate(_Value, 'undefined', _) -> 8000;
+safe_sample_rate(_Value, RateInt, Multiply1K) -> (RateInt * Multiply1K).
+
+-spec audio_codec_to_encoding(context()) -> kz_term:ne_binary().
+audio_codec_to_encoding(Context) ->
+    case kz_term:to_lower_binary(maps:get(audio_codec, Context, <<"L16">>)) of
+        <<"pcmu">> -> <<"audio/x-mulaw">>;
+        _ -> <<"audio/L16">>
     end.
 
 %% keep in mind, the first argument, the reason of terminate, is
