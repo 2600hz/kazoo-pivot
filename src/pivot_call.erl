@@ -973,14 +973,15 @@ handle_stream_start(Data, From, #state{streams=Streams}=State) ->
 -spec start_stream(kz_term:ne_binary(), kz_json:object(), pid(), state()) -> state().
 start_stream(Name, Data, RespPid, #state{call=Call, streams=Streams}=State) ->
     ProxyUrl = pivot_piper_init:websocket_proxy_url(kapps_call:account_id(Call), kapps_call:call_id(Call)),
+    AudioCodec = get_stream_codec(Data),
     AudioTracks = get_stream_tracks(Data),
     AudioMix = get_stream_mix(Data),
-    SampleRate = kz_json:get_ne_binary_value(<<"sample_rate">>, Data, <<"8k">>),
+    SampleRate = kz_json:get_ne_binary_value(<<"sample_rate">>, Data, <<"8000">>),
     Payload = stream_payload(Name, Data, self(), RespPid, State),
 
     lager:debug("sending stream command for ~s for proxy ~s", [Name, kz_log:redactor(ProxyUrl)]),
 
-    kapps_call_command:stream_start(ProxyUrl, AudioTracks, AudioMix, SampleRate, Payload, Call),
+    kapps_call_command:stream_start(ProxyUrl, AudioCodec, AudioTracks, AudioMix, SampleRate, Payload, Call),
     Stream = #stream{name = Name
                     ,start_timeout_ref = erlang:send_after(5 * ?MILLISECONDS_IN_SECOND, self(), {'stream_start', Name, 'timeout'})
                     },
@@ -999,6 +1000,13 @@ get_stream_mix(Data) ->
     case kz_json:get_ne_binary_value(<<"mix">>, Data, <<"mono">>) of
         <<"stereo">> -> <<"stereo">>;
         _ -> <<"mono">>
+    end.
+
+-spec get_stream_codec(kz_json:object()) -> kz_term:ne_binary().
+get_stream_codec(Data) ->
+    case kz_term:to_lower_binary(kz_json:get_ne_binary_value(<<"format">>, Data, <<"L16">>)) of
+        <<"pcmu">> -> <<"PCMU">>;
+        _ -> <<"L16">>
     end.
 
 -spec stream_payload(kz_term:ne_binary(), kz_json:object(), pid(), pid(), state()) -> kz_json:object().
