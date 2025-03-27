@@ -21,7 +21,7 @@
   - '<Stream>': 'doc/twiml/stream.md'
 - Streams:
   - 'doc/stream-call-media/overview.md'
-  # - 'doc/stream-call-media/events.md'
+  - 'doc/stream-call-media/events.md'
   - 'doc/stream-call-media/websocket-messages.md'
 
 - "Additional Resources":

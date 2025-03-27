@@ -129,5 +129,5 @@ call. The `<Say>` verb will never be executed by Pivot.
 - [\<Stream> Pivot TwiML Reference](../twiml/stream.md)
 - [Pivot Stream WebSocket Messages Reference](./websocket-messages.md)
 <!-- - [Callflow Stream](http://docs.2600hz.com/git/2600hz/kazoo-callflow/doc/stream.md), alternative way to start a stream using onlt Callflow -->
-<!-- - [Metaflow Stream Actions](http://docs.2600hz.com/git/2600hz/kazoo-konami-pro/doc/stream.md) allows you to control a stream via Channels API or Metaflow -->
+- [Metaflow Stream Actions](http://docs.2600hz.com/git/2600hz/kazoo-konami-pro/doc/stream.md) allows you to control a stream via Channels API or Metaflow
 <!-- link to a example websocket application on how to use pivot stream -->
