@@ -754,7 +754,7 @@ stream_event('start', Data, Context) ->
             ,{<<"callSid">>, CallId}
             ,{<<"tracks">>, expand_tracks(Data)}
             ,{<<"mediaFormat">>, kz_json:from_list(MediaFormat)}
-            ,{<<"customParameters">>, kz_json:get_json_value(<<"params">>, Data)}
+            ,{<<"customParameters">>, kz_json:get_json_value(<<"custom_params">>, Data)}
             ],
     JObj = [{<<"event">>, <<"start">>}
            ,{<<"sequenceNumber">>, 1}
