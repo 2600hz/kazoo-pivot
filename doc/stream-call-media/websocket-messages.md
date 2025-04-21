@@ -88,7 +88,7 @@ It is sent only once.
 | `start.callSid`                | The unique ID of the incoming call                                                                                                                                      |
 | `start.tracks`                 | Array of strings indicating the call's media flow for the stream, possible values are `inbound`, and `outbound`                                                         |
 | `start.mediaFormat`            |                                                                                                                                                                         |
-| `start.mediaFormat.encoding`   | The codec used for encoding for audio in [`media`](#media) messages, the value is always set to `audio/x-mulaw`                                                         |
+| `start.mediaFormat.encoding`   | The codec used for encoding for audio in [`media`](#media) messages, the value is always set to `audio/x-mulaw`, despite that the actual encoding is Linear PCM (`aduio/L16`)    |
 | `start.mediaFormat.sampleRate` | Sample rate for [audio](#media), configured by [`<Stream>` `sampleRate`](../twiml/stream.md#samplerate)                                                                 |
 | `start.mediaFormat.channels`   | The number of channels in the stream's [audio](#media), configured by [`<Stream>` `track`](../twiml/stream.md#track)                                                    |
 | `start.customParameters`       | The custom parameters as-is set by nesting in [`<Stream>`](../twiml/stream.md#sending-custom-parameters)                                                                |

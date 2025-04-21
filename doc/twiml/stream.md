@@ -6,7 +6,7 @@ Stream an active call's audio from Pivot to your server through WebSockets in re
 ## Overview
 
 `<Stream>` let you access the raw audio of a call, for further processing by your application.
-The Audio is encoded in `audio/L16` (commonly known as 16 bit linear PCM) by default.
+The Audio is encoded as Linear PCM (also known as `audio/L16`) 16-bit little-endian, 8000 Hz sample rate, Mono by default.
 
 See [Stream Call Media](../stream-call-media/overview.md) to learn more about Pivot's messages
 through the WebSocket. This page is reference for the `<Stream>` term.
