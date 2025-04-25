@@ -1,5 +1,5 @@
 %%%-----------------------------------------------------------------------------
-%%% @copyright (C) 2010-2024, 2600Hz
+%%% @copyright (C) 2010-2025, 2600Hz
 %%% @doc
 %%% This Source Code Form is subject to the terms of the Mozilla Public
 %%% License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,7 +44,8 @@ terminate(_Reason, _Req, _State) ->
 -spec media_path(kz_term:ne_binary(), kz_term:ne_binary(), kz_term:ne_binary()) -> kz_term:ne_binary().
 media_path(CallId, StreamId, ContentType) ->
     Ext = kz_mime:to_extension(ContentType),
-    FileName = <<(kz_binary:join([<<"stream_buffer">>, CallId, StreamId], <<"_">>))/binary, ".", Ext/binary>>,
+    Id = kz_binary:join([<<"stream_buffer">>, CallId, StreamId, kz_binary:rand_hex(4)], <<"_">>),
+    FileName = <<Id/binary, ".", Ext/binary>>,
     filename:join([<<"/tmp">>, FileName]).
 
 -spec media_path(kz_term:ne_binary()) -> kz_term:ne_binary().
