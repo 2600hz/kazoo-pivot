@@ -304,7 +304,8 @@ handle_call_event(JObj, Context) ->
             relay_ws_event_to_remote(Ctx, stream_event('dtmf', JObj, Ctx)),
             {[], Ctx, 'hibernate'};
         {<<"call_event">>, <<"CHANNEL_EXECUTE_COMPLETE">>, <<"noop">>} ->
-            maybe_send_media_mark(kz_call_event:application_response(JObj), Context);
+            NoopId = kz_call_event:application_response(JObj),
+            maybe_send_media_mark(NoopId, Context);
         {_Cat, _Evt, _App} ->
             {[], Context, 'hibernate'}
     end.
@@ -312,7 +313,12 @@ handle_call_event(JObj, Context) ->
 -spec maybe_send_media_mark(kz_term:api_ne_binary(), context()) ->
           {cowboy_websocket:commands(), context(), 'hibernate'}.
 maybe_send_media_mark(NoopId, #{play_buffers := Buffers}=Context) ->
-    case lists:partition(fun (#{noop_id := NId}) when NId =:= NoopId -> 'true' end, Buffers) of
+    case lists:partition(fun (#{noop_id := NId}) when NId =:= NoopId -> 'true';
+                             (_) -> 'false'
+                         end
+                        ,Buffers
+                        )
+    of
         {[], _} ->
             {[], Context, 'hibernate'};
         {[#{}=Buffer|_], Plays} ->
@@ -548,7 +554,9 @@ handle_bidirectional_msg(#{<<"event">> := <<"media">>, <<"media">> := #{}=Media}
     handle_playback_media(Audio, Buffer, Context);
 handle_bidirectional_msg(#{<<"event">> := <<"mark">>, <<"mark">> := #{}=Mark}, Context) ->
     finish_buffer_and_play(Mark, Context);
-handle_bidirectional_msg(#{<<"event">> := <<"clear">>}, #{}=Context) ->
+handle_bidirectional_msg(#{<<"event">> := <<"clear">>}, #{call := Call}=Context) ->
+    %% can we flush just play commands? there nothing in ecallmgr to flush a Group-ID.
+    _ = kapps_call_command:flush(Call),
     {[], clear_buffers(Context), 'hibernate'};
 handle_bidirectional_msg(_, Context) ->
     lager:debug("got invalid text frame from remote"),

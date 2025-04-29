@@ -305,7 +305,12 @@ handle_cast({'stream_stop', Id, Name}, State) ->
     {'noreply', NewState};
 
 handle_cast({'set_stream_id', Id}, #state{streams=Streams, call=Call}=State) ->
-    case lists:partition(fun(#stream{start_timeout_ref=TRef}) when is_reference(TRef) -> 'true' end, Streams) of
+    case lists:partition(fun(#stream{start_timeout_ref=TRef}) when is_reference(TRef) -> 'true';
+                            (_) -> 'false'
+                         end
+                        ,Streams
+                        )
+    of
         {[], _} ->
             {'noreply', State};
         {[#stream{start_timeout_ref = TRef, pid='undefined'}=Stream|_], NewStreams} ->
@@ -403,7 +408,7 @@ handle_info({'hard_stop', _Call}, State) ->
 handle_info({'get_call', From, Ref, Node, Name}, #state{streams=Streams, call=Call}=State) ->
     %% TODO: handle me rpc node?
     lager:debug("getting stream '~ts' info for proxy at ~p", [Name, From]),
-    case lists:partition(fun(#stream{name = N}) -> N =:= Name end, Streams) of
+    case lists:partition(fun(#stream{name = N}) -> N =:= Name; (_) -> 'false' end, Streams) of
         {[], _} ->
             From ! {'get_call', From, Ref, 'not_found'},
             {'noreply', State};
@@ -426,7 +431,7 @@ handle_info({'get_call', From, Ref, Node, Name}, #state{streams=Streams, call=Ca
     end;
 handle_info({'stream_start', Name, 'timeout'}, #state{streams=Streams}=State) ->
     Data = kz_json:from_list([{<<"name">>, Name}]),
-    case lists:partition(fun(#stream{name=N}) when N =:= Name -> 'true' end, Streams) of
+    case lists:partition(fun(#stream{name=N}) when N =:= Name -> 'true'; (_) -> 'false' end, Streams) of
         {[], _} ->
             {'noreply', State};
         {[#stream{pid=Pid}=Stream|_], NewStreams} when is_pid(Pid) ->
