@@ -759,7 +759,7 @@ handle_resp(RequesterQ, Call, IsFlowDoc, CT, <<_/binary>> = RespBody, AMQPConsum
           {'usurp', kapps_call:call()}.
 process_resp(_, Call, _, <<>>) ->
     lager:debug("no response body, finishing up"),
-    {'stop_call', kzt_util:add_progress(<<"status">>, <<"empty_response">>, Call)};
+    {'stop_call', kzt_util:add_progress(<<"status">>, <<"no_response_body">>, Call)};
 process_resp(RequesterQ, Call, CT, RespBody) ->
     lager:info("finding translator for content type ~s", [CT]),
     try kzt_translator:exec(RequesterQ, Call, CT, RespBody) of
@@ -783,21 +783,28 @@ process_resp(RequesterQ, Call, CT, RespBody) ->
             {'stop_call', kzt_util:add_progress(<<"status">>, <<"error">>, Call1)};
         {'error', Call1, Errors} ->
             lager:error("validation errors in response ~p, FAIL", [Errors]),
-            Setters = [{fun kzt_util:add_error/3, <<"validation_errors">>, {Errors, RespBody}}
+            Setters = [{fun kzt_util:add_error/3, <<"validation_errors">>, Errors}
                       ,{fun kzt_util:add_progress/3, <<"status">>, <<"error">>}
                       ],
             {'stop_call', kapps_call:exec(Setters, Call1)}
     catch
         'throw':{'error', 'invalid_format', _CT} ->
             lager:info("pivot translators does not support this content type: ~s", [_CT]),
-            UpdatedCall = kzt_util:add_error(<<"invalid_format">>, _CT, Call),
-            {'stop_call', UpdatedCall};
+            UpdatedCall = [{fun kzt_util:add_error/3, <<"execution">>, <<"invalid_format">>}
+                          ,{fun kzt_util:add_progress/3, <<"status">>, <<"error">>}
+                          ],
+            {'stop_call', kapps_call:exec(UpdatedCall, Call)};
         'throw':{'json', Msg, Before, After} ->
-            {'stop_call', kzt_util:add_error(<<"json_error">>, {Msg, Before, After, RespBody}, Call)};
+            UpdatedCall = [{fun kzt_util:add_error/3, <<"json_error">>, {'json', Msg, Before, After}}
+                          ,{fun kzt_util:add_progress/3, <<"status">>, <<"error">>}
+                          ],
+            {'stop_call', kapps_call:exec(UpdatedCall, Call)};
         'throw':{'error', 'unrecognized_cmds'} ->
             lager:info("no translators recognize the supplied commands: ~s", [RespBody]),
-            UpdatedCall = kzt_util:add_error(<<"unrecognized_cmds">>, <<"no translators recognize the supplied commands">>, Call),
-            {'stop_call', UpdatedCall}
+            UpdatedCall = [{fun kzt_util:add_error/3, <<"execution">>, <<"unrecognized_cmds">>}
+                          ,{fun kzt_util:add_progress/3, <<"status">>, <<"error">>}
+                          ],
+            {'stop_call', kapps_call:exec(UpdatedCall, Call)}
     end.
 
 -spec uri(kz_term:ne_binary(), iolist()) -> kz_term:ne_binary().
@@ -838,50 +845,43 @@ maybe_debug_req(Call, Uri, Method, ReqHdrs, ReqBody, 'true') ->
 maybe_debug_resp('false', _Call, _StatusCode, _RespHeaders, _RespBody) -> 'ok';
 maybe_debug_resp('true', Call, StatusCode, RespHeaders, RespBody) ->
     Headers = kz_json:from_list([{fix_value(K), fix_value(V)} || {K, V} <- RespHeaders]),
-    store_debug(Call
-               ,[{<<"resp_status_code">>, StatusCode}
-                ,{<<"resp_headers">>, Headers}
-                ,{<<"resp_body">>, RespBody}
-                ,{<<"debug_type">>, <<"response">>}
-                ,{<<"pivot_session">>, kzt_util:get_pivot_session(Call)}
-                ]
+    store_debug(Call, [{<<"resp_status_code">>, StatusCode}
+                      ,{<<"resp_headers">>, Headers}
+                      ,{<<"resp_body">>, RespBody}
+                      ,{<<"debug_type">>, <<"response">>}
+                      ,{<<"pivot_session">>, kzt_util:get_pivot_session(Call)}
+                      ]
                ).
 
 -spec store_debug(kapps_call:call(), kz_term:proplist() | kz_json:object()) -> 'ok'.
 store_debug(Call, Doc) when is_list(Doc) ->
     store_debug(Call, kz_json:from_list(Doc));
 store_debug(Call, DebugJObj) ->
-    {ErrorsJObj, ErrorKeys} =
-        case kzt_util:get_errors(Call) of
-            'undefined' -> {kz_json:new(), []};
-            Errors -> add_error_debug(Errors)
-        end,
-
-    JObj =
+    DebugJObj1 =
         case kz_json:get_binary_value(<<"debug_type">>, DebugJObj) of
             <<"request">> -> DebugJObj;
             <<"response">> ->
-                ProcessJObj = case kzt_util:get_progress(Call) of
-                                  'undefined' -> kz_json:new();
-                                  Progress ->
-                                      kz_json:from_list(lists:reverse(Progress))
-                              end,
-                kz_json:set_value(<<"resp_progress">>
-                                 ,kz_json:merge([ErrorsJObj, ProcessJObj])
-                                 ,DebugJObj
-                                 )
+                Progress =  [{<<"resp_progress">>, kzt_util:get_progress(Call)}],
+                kz_json:merge(kz_json:from_list(Progress), DebugJObj)
         end,
 
-    HasErrors = kz_json:is_empty(ErrorsJObj) =:= false,
-    JObjWithErrorFlags = kz_json:set_values([{<<"has_error">>, HasErrors}
+    DebugJObj2 = case kzt_util:get_errors(Call) of
+                     'undefined' ->
+                         kz_json:set_values([{<<"has_error">>, 'false'}
+                                            ,{<<"error_types">>, []}
+                                            ], DebugJObj1
+                                           );
+                     Errors ->
+                         {ErrorsJObj, ErrorKeys} = add_error_debug(Errors),
+                         kz_json:set_values([{<<"has_error">>, 'true'}
                                             ,{<<"error_types">>, ErrorKeys}
-                                            ], JObj
-                                           ),
-
+                                            ,{<<"error_detail">>, ErrorsJObj}
+                                            ], DebugJObj1
+                                           )
+                 end,
     AccountModDb = kzs_util:format_account_mod_id(kapps_call:account_id(Call)),
-    JObj1 = debug_doc(Call, JObjWithErrorFlags, AccountModDb),
-
-    case kazoo_modb:save_doc(AccountModDb, JObj1) of
+    Doc = debug_doc(Call, DebugJObj2, AccountModDb),
+    case kazoo_modb:save_doc(AccountModDb, Doc) of
         {'ok', _Saved} ->
             lager:debug("saved debug doc: ~p", [_Saved]);
         {'error', _E} ->
@@ -1077,41 +1077,36 @@ send_stream_error(Data, Reason, #state{call=Call}) ->
 
 -spec add_error_debug(kz_term:proplist()) -> {kz_json:object(), list()}.
 add_error_debug(Errors) ->
-    lists:foldl(
-      fun(Error, {Acc, Keys}) ->
-              case Error of
-                  {<<"validation_errors">>, {JessiErrors, RespBody}} ->
-                      {[debug_validation_error(JessiErrors, RespBody)|Acc], [<<"validation_errors">>|Keys]};
-                  {<<"json_error">>, {Msg, Before, After, RespBody}} ->
-                      {[debug_json_error(Msg, Before, After, RespBody)|Acc], [<<"json_error">>|Keys]};
-                  {E, R} when is_map(R)->
-                      {[kz_json:from_list([{E, kz_json:from_map(R)}])|Acc], [E|Keys]};
-                  {E, R} when is_list(R)->
-                      {[kz_json:from_list([{E, kz_json:from_list(R)}])|Acc], [E|Keys]};
-                  Error ->
-                      {[kz_json:from_list([Error])|Acc], [<<"unknown">>|Keys]}
-              end
-      end,
-      {[], []},
-      Errors).
+    lists:foldl(fun(Error, {Acc, Keys}) ->
+                        case Error of
+                            {<<"validation_errors">>, JessiErrors} ->
+                                {[debug_validation_error(JessiErrors)|Acc], [<<"validation_errors">>|Keys]};
+                            {<<"json_error">>, {'json', Msg, Before, After}} ->
+                                {[debug_json_error(Msg, Before, After)|Acc], [<<"json_error">>|Keys]};
+                            {E, R} when is_map(R)->
+                                {[kz_json:from_list([{E, kz_json:from_map(R)}])|Acc], [E|Keys]};
+                            {E, R} when is_list(R)->
+                                {[kz_json:from_list([{E, kz_json:from_list(R)}])|Acc], [E|Keys]};
+                            {E, _R} when is_binary(E)->
+                                {[kz_json:from_list([Error])|Acc], [E|Keys]};
+                            Error ->
+                                {[kz_json:from_list([Error])|Acc], [<<"unknown">>|Keys]}
+                        end
+                end,
+                {[], []},
+                Errors).
 
--spec debug_validation_error([jesse_error:error_reason()], binary()) -> 'ok'.
-debug_validation_error(Errors, RespBody) ->
+-spec debug_validation_error([jesse_error:error_reason()]) -> 'ok'.
+debug_validation_error(Errors) ->
     JObj = kz_json_schema:errors_to_jobj(Errors),
     kz_json:from_list([{<<"schema_errors">>, JObj}
-                      ,{<<"resp_body">>, RespBody}
-                      ,{<<"debug_type">>, <<"schema_error">>}
                       ]
                      ).
 
-debug_json_error(Msg, Before, After, RespBody) ->
-    kz_json:from_list([{<<"resp_body">>, RespBody}
-                      ,{<<"json_errors">>
-                       ,kz_json:from_list([{<<"before">>, Before}
-                                          ,{<<"after">>, After}
-                                          ,{<<"message">>, Msg}
-                                          ])
-                       }
-                      ,{<<"debug_type">>, <<"json_error">>}
+debug_json_error(Msg, Before, After) ->
+    kz_json:from_list([{<<"json_errors">>, kz_json:from_list([{<<"before">>, Before}
+                                                             ,{<<"after">>, After}
+                                                             ,{<<"message">>, Msg}
+                                                             ])}
                       ]
                      ).
