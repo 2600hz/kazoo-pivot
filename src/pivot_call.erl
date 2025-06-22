@@ -457,12 +457,15 @@ handle_info({'http', {ReqId, 'stream_start', Hdrs}}
 handle_info({'http', {ReqId, {'error', Error}}}
            ,#state{call=Call
                   ,request_id=ReqId
+                  ,debug=ShouldDebug
                   ,response_body=_RespBody
                   ,requester_queue=RequesterQ
                   }=State
            ) ->
     lager:info("recv error ~p : collected: ~s", [Error, lists:reverse(_RespBody)]),
-    publish_failed_or_hangup(Call, RequesterQ),
+    Call1 = kzt_util:add_error(<<"failed_connect">>, <<"server connection failed">>, Call),
+    maybe_debug_resp(ShouldDebug, Call1, 'undefined', 'undefined', 'undefined'),
+    publish_failed_or_hangup(Call1, RequesterQ),
     {'stop', 'normal', State};
 
 handle_info({'http', {ReqId, 'stream', Chunk}}
@@ -841,10 +844,14 @@ maybe_debug_req(Call, Uri, Method, ReqHdrs, ReqBody, 'true') ->
                       ]
                ).
 
--spec maybe_debug_resp(boolean(), kapps_call:call(), kz_term:ne_binary(), kz_term:proplist(), binary()) -> 'ok'.
+-spec maybe_debug_resp(boolean(), kapps_call:call(), kz_term:api_binary(), kz_term:api_proplist(), kz_term:api_binary()) -> 'ok'.
 maybe_debug_resp('false', _Call, _StatusCode, _RespHeaders, _RespBody) -> 'ok';
 maybe_debug_resp('true', Call, StatusCode, RespHeaders, RespBody) ->
-    Headers = kz_json:from_list([{fix_value(K), fix_value(V)} || {K, V} <- RespHeaders]),
+    Headers = case RespHeaders of
+                  'undefined' -> 'undefined';
+                  RespHeaders ->
+                      kz_json:from_list([{fix_value(K), fix_value(V)} || {K, V} <- RespHeaders])
+              end,
     store_debug(Call, [{<<"resp_status_code">>, StatusCode}
                       ,{<<"resp_headers">>, Headers}
                       ,{<<"resp_body">>, RespBody}
@@ -865,17 +872,14 @@ store_debug(Call, DebugJObj) ->
                 kz_json:merge(kz_json:from_list(Progress), DebugJObj)
         end,
 
-    DebugJObj2 = case kzt_util:get_errors(Call) of
+    DebugJObj2 = case kzt_util:get_error(Call) of
                      'undefined' ->
-                         kz_json:set_values([{<<"has_error">>, 'false'}
-                                            ,{<<"error_types">>, []}
-                                            ], DebugJObj1
-                                           );
-                     Errors ->
-                         {ErrorsJObj, ErrorKeys} = add_error_debug(Errors),
+                         kz_json:set_value(<<"has_error">>, 'false', DebugJObj1);
+                     Error ->
+                         {ErrorType, ErrorDetail} = parse_error_debug(Error),
                          kz_json:set_values([{<<"has_error">>, 'true'}
-                                            ,{<<"error_types">>, ErrorKeys}
-                                            ,{<<"error_detail">>, ErrorsJObj}
+                                            ,{<<"error_type">>, ErrorType}
+                                            ,{<<"error_detail">>, ErrorDetail}
                                             ], DebugJObj1
                                            )
                  end,
@@ -1075,26 +1079,17 @@ send_stream_error(Data, Reason, #state{call=Call}) ->
     _ = kz_amqp_worker:cast(Props, fun kapi_pivot:publish_stream_stop/1),
     'ok'.
 
--spec add_error_debug(kz_term:proplist()) -> {kz_json:object(), list()}.
-add_error_debug(Errors) ->
-    lists:foldl(fun(Error, {Acc, Keys}) ->
-                        case Error of
-                            {<<"validation_errors">>, JessiErrors} ->
-                                {[debug_validation_error(JessiErrors)|Acc], [<<"validation_errors">>|Keys]};
-                            {<<"json_error">>, {'json', Msg, Before, After}} ->
-                                {[debug_json_error(Msg, Before, After)|Acc], [<<"json_error">>|Keys]};
-                            {E, R} when is_map(R)->
-                                {[kz_json:from_list([{E, kz_json:from_map(R)}])|Acc], [E|Keys]};
-                            {E, R} when is_list(R)->
-                                {[kz_json:from_list([{E, kz_json:from_list(R)}])|Acc], [E|Keys]};
-                            {E, _R} when is_binary(E)->
-                                {[kz_json:from_list([Error])|Acc], [E|Keys]};
-                            Error ->
-                                {[kz_json:from_list([Error])|Acc], [<<"unknown">>|Keys]}
-                        end
-                end,
-                {[], []},
-                Errors).
+-spec parse_error_debug({kz_term:ne_binary(), term()}) ->
+          {kz_term:ne_binary(), kz_json:object() | kz_term:ne_binary()}.
+parse_error_debug({<<"validation_errors">>, JessiErrors}) ->
+    {<<"validation_errors">>, debug_validation_error(JessiErrors)};
+parse_error_debug({<<"json_error">>, {'json', Msg, Before, After}}) ->
+    {<<"json_error">>, debug_json_error(Msg, Before, After)};
+parse_error_debug({<<ErrorType/binary>>, Detail}) when is_list(Detail)->
+    {ErrorType, kz_json:from_list(Detail)};
+parse_error_debug({<<ErrorType/binary>>, Detail}) when is_map(Detail)->
+    {ErrorType, kz_json:from_map(Detail)};
+parse_error_debug(Error) -> Error.
 
 -spec debug_validation_error([jesse_error:error_reason()]) -> 'ok'.
 debug_validation_error(Errors) ->
